@@ -1,0 +1,84 @@
+OBJECT Table 52002203 Voucher Entry
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:21:23;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 3   ;   ;G/L Account No.     ;Code20        ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=G/L Account No.;
+                                                              CHS=G/L账目编号] }
+    { 4   ;   ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              CHS=过帐日期];
+                                                   ClosingDates=Yes }
+    { 6   ;   ;Document No.        ;Code20        ;CaptionML=[ENU=Document No.;
+                                                              CHS=单据编号] }
+    { 7   ;   ;Description         ;Text50        ;CaptionML=[ENU=Description;
+                                                              CHS=说明] }
+    { 17  ;   ;Amount              ;Decimal       ;CaptionML=[ENU=Amount;
+                                                              CHS=金额];
+                                                   AutoFormatType=1 }
+    { 23  ;   ;Global Dimension 1 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=[ENU=Global Dimension 1 Code;
+                                                              CHS=全局维 1 代码];
+                                                   CaptionClass='1,1,1' }
+    { 24  ;   ;Global Dimension 2 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=[ENU=Global Dimension 2 Code;
+                                                              CHS=全局维 2 代码];
+                                                   CaptionClass='1,1,2' }
+    { 27  ;   ;User ID             ;Code50        ;TableRelation=User;
+                                                   OnLookup=VAR
+                                                              LoginMgt@1000 : Codeunit 418;
+                                                            BEGIN
+                                                            END;
+
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=User ID;
+                                                              CHS=用户ID] }
+    { 53  ;   ;Debit Amount        ;Decimal       ;CaptionML=[ENU=Debit Amount;
+                                                              CHS=借项金额];
+                                                   BlankZero=Yes;
+                                                   AutoFormatType=1 }
+    { 54  ;   ;Credit Amount       ;Decimal       ;CaptionML=[ENU=Credit Amount;
+                                                              CHS=贷项金额];
+                                                   BlankZero=Yes;
+                                                   AutoFormatType=1 }
+    { 50001;  ;Voucher No.         ;Code20        ;TableRelation="G/L Entry".Field50001 }
+    { 50003;  ;Prepared            ;Code80         }
+    { 50090;  ;fBlnCredit          ;Boolean       ;CaptionML=[ENU=Credit;
+                                                              CHS=贷方] }
+    { 50091;  ;fIntEntryCount      ;Integer       ;CaptionML=[ENU=Entry Count;
+                                                              CHS=填表数] }
+    { 50093;  ;fCodShortcutDim3    ;Code20        ;CaptionClass='1,2,3' }
+    { 50094;  ;fCodShortcutDim4    ;Code20        ;CaptionClass='1,2,4' }
+    { 50095;  ;fCodShortcutDim5    ;Code20        ;CaptionClass='1,2,5' }
+    { 50096;  ;fCodShortcutDim6    ;Code20        ;CaptionClass='1,2,6' }
+    { 50097;  ;fCodShortcutDim7    ;Code20        ;CaptionClass='1,2,7' }
+    { 50098;  ;fCodShortcutDim8    ;Code20        ;CaptionClass='1,2,8' }
+  }
+  KEYS
+  {
+    {    ;Document No.,G/L Account No.,fBlnCredit,Global Dimension 1 Code,Global Dimension 2 Code,fCodShortcutDim3,fCodShortcutDim4,fCodShortcutDim5,fCodShortcutDim6,fCodShortcutDim7,fCodShortcutDim8;
+                                                   Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      #TECMC.013    06-08-30 11:30:23    TECSH.MC    Voucher Combination by Doc/Acc/Dimension
+    }
+    END.
+  }
+}
+

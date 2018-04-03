@@ -1,0 +1,77 @@
+OBJECT Page 52002201 G/L Register & Doc. No.
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:35:50;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=G/L Register & Doc. No.;
+               CHS=×ÜÕÊµÇ¼Ç & ÎÄµµ±àºÅ];
+    SourceTable=Table17;
+    PageType=Card;
+    OnAfterGetRecord=BEGIN
+                           GLRegister.RESET;
+                           GLRegister.SETFILTER(GLRegister."From Entry No.", '<=%1', "Entry No.");
+                           GLRegister.SETFILTER(GLRegister."To Entry No.", '>=%1', "Entry No.");
+                           IF GLRegister.FIND('-') THEN
+                             RegNo := GLRegister."No.";
+                     END;
+
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1000000010;2;Field  ;
+                CaptionML=[ENU=Register No.;
+                           CHS=µÇ¼ÇºÅ];
+                SourceExpr=RegNo }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Document No." }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Posting Date" }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="Entry No." }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="Source Code" }
+
+    { 1000000020;2;Field  ;
+                SourceExpr="Journal Batch Name" }
+
+    { 1000000016;2;Field  ;
+                SourceExpr="User ID" }
+
+    { 1000000018;2;Field  ;
+                SourceExpr="Source Type" }
+
+    { 1000000022;2;Field  ;
+                SourceExpr="Source No." }
+
+    { 1000000012;2;Field  ;
+                SourceExpr="Transaction No." }
+
+  }
+  CODE
+  {
+    VAR
+      RegNo@1000000000 : Integer;
+      GLRegister@1000000001 : Record 45;
+
+    BEGIN
+    END.
+  }
+}
+

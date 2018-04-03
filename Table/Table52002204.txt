@@ -1,0 +1,647 @@
+OBJECT Table 52002204 Interim Amount Buffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:21:23;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 32=r,
+                TableData 5802=r;
+    CaptionML=[ENU=Interim Amount Buffer;
+               CHS=暂估金额临时表];
+    LookupPageID=Page6653;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Document Type       ;Option        ;CaptionML=[ENU=Document Type;
+                                                              CHS=单据类型];
+                                                   OptionCaptionML=[ENU=Purchase,Purchase Return,Sales,Sales Return;
+                                                                    CHS=采购,采购退货,销售,销售退货];
+                                                   OptionString=Purchase,Purchase Return,Sales,Sales Return }
+    { 2   ;   ;Vendor/Customer No. ;Code20        ;TableRelation=Vendor;
+                                                   OnLookup=BEGIN
+                                                              Vendor.RESET;
+                                                              Customer.RESET;
+
+                                                              CASE "Document Type" OF
+                                                                "Document Type"::Purchase,"Document Type"::"Purchase Return": BEGIN
+                                                                  Vendor.SETRANGE("No.","Vendor/Customer No.");
+                                                                  PAGE.RUN(0,Vendor);
+                                                                END;
+                                                                "Document Type"::Sales,"Document Type"::"Sales Return": BEGIN
+                                                                  Customer.SETRANGE("No.","Vendor/Customer No.");
+                                                                  PAGE.RUN(0,Customer);
+                                                                END;
+                                                              END;
+                                                            END;
+
+                                                   CaptionML=[ENU=Vendor/Customer No.;
+                                                              CHS=供应商/客户编号];
+                                                   Editable=No }
+    { 3   ;   ;Document No.        ;Code20        ;OnLookup=BEGIN
+                                                              CASE "Document Type" OF
+                                                                "Document Type"::Purchase: BEGIN
+                                                                  PurchRcptHdr.RESET;
+                                                                  PurchRcptHdr.SETRANGE("No.","Document No.");
+                                                                  PAGE.RUN(0,PurchRcptHdr);
+                                                                END;
+
+                                                                "Document Type"::"Purchase Return": BEGIN
+                                                                  ReturnShipHdr.RESET;
+                                                                  ReturnShipHdr.SETRANGE("No.","Document No.");
+                                                                  PAGE.RUN(0,ReturnShipHdr);
+                                                                END;
+
+                                                                "Document Type"::Sales: BEGIN
+                                                                  SaleShipHdr.RESET;
+                                                                  SaleShipHdr.SETRANGE("No.","Document No.");
+                                                                  PAGE.RUN(0,SaleShipHdr);
+                                                                END;
+
+                                                                "Document Type"::"Sales Return": BEGIN
+                                                                  ReturnRcptHdr.RESET;
+                                                                  ReturnRcptHdr.SETRANGE("No.","Document No.");
+                                                                  PAGE.RUN(0,ReturnRcptHdr);
+                                                                END;
+
+                                                              END;
+                                                            END;
+
+                                                   CaptionML=[ENU=Document No.;
+                                                              CHS=单据编号] }
+    { 4   ;   ;Line No.            ;Integer       ;CaptionML=[ENU=Line No.;
+                                                              CHS=行编号] }
+    { 5   ;   ;Type                ;Option        ;CaptionML=[ENU=Type;
+                                                              CHS=类型];
+                                                   OptionCaptionML=[ENU=" ,G/L Account,Item,,Fixed Asset,Charge (Item)";
+                                                                    CHS=" ,G/L 帐目,物料,Resource,固定资产,收费 (物料)"];
+                                                   OptionString=[ ,G/L Account,Item,,Fixed Asset,Charge (Item)] }
+    { 6   ;   ;No.                 ;Code20        ;TableRelation=IF (Type=CONST(G/L Account)) "G/L Account"
+                                                                 ELSE IF (Type=CONST(Item)) Item
+                                                                 ELSE IF (Type=CONST(Fixed Asset)) "Fixed Asset"
+                                                                 ELSE IF (Type=CONST("Charge (Item)")) "Item Charge";
+                                                   CaptionML=[ENU=No.;
+                                                              CHS=编号] }
+    { 7   ;   ;Location Code       ;Code10        ;TableRelation=Location WHERE (Use As In-Transit=CONST(No));
+                                                   CaptionML=[ENU=Location Code;
+                                                              CHS=位置代码] }
+    { 8   ;   ;Posting Group       ;Code10        ;TableRelation=IF (Type=CONST(Item)) "Inventory Posting Group"
+                                                                 ELSE IF (Type=CONST(Fixed Asset)) "FA Posting Group";
+                                                   CaptionML=[ENU=Posting Group;
+                                                              CHS=过账组];
+                                                   Editable=No }
+    { 11  ;   ;Description         ;Text50        ;CaptionML=[ENU=Description;
+                                                              CHS=说明] }
+    { 12  ;   ;Description 2       ;Text50        ;CaptionML=[ENU=Description 2;
+                                                              CHS=说明 2] }
+    { 13  ;   ;Unit of Measure     ;Text10        ;CaptionML=[ENU=Unit of Measure;
+                                                              CHS=计量单位] }
+    { 15  ;   ;Quantity            ;Decimal       ;CaptionML=[ENU=Quantity;
+                                                              CHS=数量];
+                                                   DecimalPlaces=0:5 }
+    { 22  ;   ;Direct Unit Cost/Unit Price;Decimal;CaptionML=[ENU=Direct Unit Cost/Unit Price;
+                                                              CHS=单位成本/价格];
+                                                   AutoFormatType=2;
+                                                   AutoFormatExpr=GetCurrencyCode }
+    { 23  ;   ;Unit Cost (LCY)     ;Decimal       ;CaptionML=[ENU=Unit Cost (LCY);
+                                                              CHS=单位成本 (LCY)];
+                                                   AutoFormatType=2 }
+    { 25  ;   ;VAT %               ;Decimal       ;CaptionML=[ENU=VAT %;
+                                                              CHS=增值税];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 27  ;   ;Line Discount %     ;Decimal       ;CaptionML=[ENU=Line Discount %;
+                                                              CHS=行折扣 %];
+                                                   DecimalPlaces=0:5;
+                                                   MinValue=0;
+                                                   MaxValue=100 }
+    { 31  ;   ;Unit Price (LCY)    ;Decimal       ;CaptionML=[ENU=Unit Price (LCY);
+                                                              CHS=单价(LCY)];
+                                                   AutoFormatType=2 }
+    { 32  ;   ;Allow Invoice Disc. ;Boolean       ;InitValue=Yes;
+                                                   CaptionML=[ENU=Allow Invoice Disc.;
+                                                              CHS=允许发票折扣] }
+    { 34  ;   ;Gross Weight        ;Decimal       ;CaptionML=[ENU=Gross Weight;
+                                                              CHS=毛重];
+                                                   DecimalPlaces=0:5 }
+    { 35  ;   ;Net Weight          ;Decimal       ;CaptionML=[ENU=Net Weight;
+                                                              CHS=净重];
+                                                   DecimalPlaces=0:5 }
+    { 36  ;   ;Units per Parcel    ;Decimal       ;CaptionML=[ENU=Units per Parcel;
+                                                              CHS=每包单位数];
+                                                   DecimalPlaces=0:5 }
+    { 37  ;   ;Unit Volume         ;Decimal       ;CaptionML=[ENU=Unit Volume;
+                                                              CHS=单位体积];
+                                                   DecimalPlaces=0:5 }
+    { 38  ;   ;Appl.-to Item Entry ;Integer       ;CaptionML=[ENU=Appl.-to Item Entry;
+                                                              CHS=应用-至物料分录] }
+    { 39  ;   ;Item Entry No.      ;Integer       ;CaptionML=[ENU=Item Shpt. Entry No.;
+                                                              CHS=物料发货分录编号] }
+    { 40  ;   ;Shortcut Dimension 1 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=[ENU=Shortcut Dimension 1 Code;
+                                                              CHS=快捷维1代码];
+                                                   CaptionClass='1,2,1' }
+    { 41  ;   ;Shortcut Dimension 2 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=[ENU=Shortcut Dimension 2 Code;
+                                                              CHS=快捷维2代码];
+                                                   CaptionClass='1,2,2' }
+    { 45  ;   ;Job No.             ;Code20        ;TableRelation=Job;
+                                                   CaptionML=[ENU=Job No.;
+                                                              CHS=工作编号] }
+    { 54  ;   ;Indirect Cost %     ;Decimal       ;CaptionML=[ENU=Indirect Cost %;
+                                                              CHS=间接成本%];
+                                                   DecimalPlaces=0:5;
+                                                   MinValue=0 }
+    { 58  ;   ;Qty. Not Invoiced   ;Decimal        }
+    { 61  ;   ;Quantity Invoiced   ;Decimal       ;CaptionML=[ENU=Quantity Invoiced;
+                                                              CHS=已开发票数量];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 68  ;   ;Invoice Vendor/Customer No.;Code20 ;TableRelation=Vendor;
+                                                   OnLookup=BEGIN
+                                                              Vendor.RESET;
+                                                              Customer.RESET;
+
+                                                              CASE "Document Type" OF
+                                                                "Document Type"::Purchase,"Document Type"::"Purchase Return": BEGIN
+                                                                  Vendor.SETRANGE("No.","Invoice Vendor/Customer No.");
+                                                                  PAGE.RUN(0,Vendor);
+                                                                END;
+                                                                "Document Type"::Sales,"Document Type"::"Sales Return": BEGIN
+                                                                  Customer.SETRANGE("No.","Invoice Vendor/Customer No.");
+                                                                  PAGE.RUN(0,Customer);
+                                                                END;
+                                                              END;
+                                                            END;
+
+                                                   CaptionML=[ENU=Invoice Vendor/Customer No.;
+                                                              CHS=开票供应商/客户编码];
+                                                   Editable=No }
+    { 70  ;   ;Vendor Item No.     ;Text20        ;CaptionML=[ENU=Vendor Item No.;
+                                                              CHS=供应商物料编号] }
+    { 74  ;   ;Gen. Bus. Posting Group;Code10     ;TableRelation="Gen. Business Posting Group";
+                                                   CaptionML=[ENU=Gen. Bus. Posting Group;
+                                                              CHS=普通业务过账组] }
+    { 75  ;   ;Gen. Prod. Posting Group;Code10    ;TableRelation="Gen. Product Posting Group";
+                                                   CaptionML=[ENU=Gen. Prod. Posting Group;
+                                                              CHS=普通产品过账组] }
+    { 77  ;   ;VAT Calculation Type;Option        ;CaptionML=[ENU=VAT Calculation Type;
+                                                              CHS=VAT计算类型];
+                                                   OptionCaptionML=[ENU=Normal VAT,Reverse Charge VAT,Full VAT,Sales Tax;
+                                                                    CHS=正常 VAT,反向收费VAT,完全VAT,销售税];
+                                                   OptionString=Normal VAT,Reverse Charge VAT,Full VAT,Sales Tax }
+    { 78  ;   ;Transaction Type    ;Code10        ;TableRelation="Transaction Type";
+                                                   CaptionML=[ENU=Transaction Type;
+                                                              CHS=交易类型] }
+    { 79  ;   ;Transport Method    ;Code10        ;TableRelation="Transport Method";
+                                                   CaptionML=[ENU=Transport Method;
+                                                              CHS=运输方法] }
+    { 80  ;   ;Attached to Line No.;Integer       ;TableRelation="Return Shipment Line"."Line No." WHERE (Document No.=FIELD(Document No.));
+                                                   CaptionML=[ENU=Attached to Line No.;
+                                                              CHS=所属行编号] }
+    { 81  ;   ;Entry Point         ;Code10        ;TableRelation="Entry/Exit Point";
+                                                   CaptionML=[ENU=Entry Point;
+                                                              CHS=入口点] }
+    { 82  ;   ;Area                ;Code10        ;TableRelation=Area;
+                                                   CaptionML=[ENU=Area;
+                                                              CHS=范围] }
+    { 83  ;   ;Transaction Specification;Code10   ;TableRelation="Transaction Specification";
+                                                   CaptionML=[ENU=Transaction Specification;
+                                                              CHS=交易规范] }
+    { 85  ;   ;Tax Area Code       ;Code20        ;TableRelation="Tax Area";
+                                                   CaptionML=[ENU=Tax Area Code;
+                                                              CHS=税收范围代码] }
+    { 86  ;   ;Tax Liable          ;Boolean       ;CaptionML=[ENU=Tax Liable;
+                                                              CHS=应纳税] }
+    { 87  ;   ;Tax Group Code      ;Code10        ;TableRelation="Tax Group";
+                                                   CaptionML=[ENU=Tax Group Code;
+                                                              CHS=税组代码] }
+    { 88  ;   ;Use Tax             ;Boolean       ;CaptionML=[ENU=Use Tax;
+                                                              CHS=使用税] }
+    { 89  ;   ;VAT Bus. Posting Group;Code10      ;TableRelation="VAT Business Posting Group";
+                                                   CaptionML=[ENU=VAT Bus. Posting Group;
+                                                              CHS=VAT业务过账组] }
+    { 90  ;   ;VAT Prod. Posting Group;Code10     ;TableRelation="VAT Product Posting Group";
+                                                   CaptionML=[ENU=VAT Prod. Posting Group;
+                                                              CHS=VAT产品过账组] }
+    { 91  ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=[ENU=Currency Code;
+                                                              CHS=货币代码];
+                                                   Editable=No }
+    { 97  ;   ;Blanket Order No.   ;Code20        ;TableRelation="Sales Header".No. WHERE (Document Type=CONST(Blanket Order));
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Blanket Order No.;
+                                                              CHS=总订单编号] }
+    { 98  ;   ;Blanket Order Line No.;Integer     ;TableRelation="Sales Line"."Line No." WHERE (Document Type=CONST(Blanket Order),
+                                                                                                Document No.=FIELD(Blanket Order No.));
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Blanket Order Line No.;
+                                                              CHS=总订单行编号] }
+    { 99  ;   ;VAT Base Amount     ;Decimal       ;CaptionML=[ENU=VAT Base Amount;
+                                                              CHS=VAT基础金额];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr=GetCurrencyCode }
+    { 100 ;   ;Unit Cost           ;Decimal       ;CaptionML=[ENU=Unit Cost;
+                                                              CHS=单位成本];
+                                                   Editable=No;
+                                                   AutoFormatType=2;
+                                                   AutoFormatExpr=GetCurrencyCode }
+    { 5401;   ;Prod. Order No.     ;Code20        ;CaptionML=[ENU=Prod. Order No.;
+                                                              CHS=生产单编号] }
+    { 5402;   ;Variant Code        ;Code10        ;TableRelation=IF (Type=CONST(Item)) "Item Variant".Code WHERE (Item No.=FIELD(No.));
+                                                   CaptionML=[ENU=Variant Code;
+                                                              CHS=变量代码] }
+    { 5403;   ;Bin Code            ;Code20        ;TableRelation=Bin.Code WHERE (Location Code=FIELD(Location Code),
+                                                                                 Item Filter=FIELD(No.),
+                                                                                 Variant Filter=FIELD(Variant Code));
+                                                   CaptionML=[ENU=Bin Code;
+                                                              CHS=货仓代码] }
+    { 5404;   ;Qty. per Unit of Measure;Decimal   ;CaptionML=[ENU=Qty. per Unit of Measure;
+                                                              CHS=按计量单位的数量];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 5407;   ;Unit of Measure Code;Code10        ;TableRelation=IF (Type=CONST(Item)) "Item Unit of Measure".Code WHERE (Item No.=FIELD(No.))
+                                                                 ELSE "Unit of Measure";
+                                                   CaptionML=[ENU=Unit of Measure Code;
+                                                              CHS=计量单位代码] }
+    { 5415;   ;Quantity (Base)     ;Decimal       ;CaptionML=[ENU=Quantity (Base);
+                                                              CHS=数量 (基础)];
+                                                   DecimalPlaces=0:5 }
+    { 5461;   ;Qty. Invoiced (Base);Decimal       ;CaptionML=[ENU=Qty. Invoiced (Base);
+                                                              CHS=发票数量(基础)];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 5600;   ;FA Posting Date     ;Date          ;CaptionML=[ENU=FA Posting Date;
+                                                              CHS=FA 过账日期] }
+    { 5601;   ;FA Posting Type     ;Option        ;CaptionML=[ENU=FA Posting Type;
+                                                              CHS=FA 过账类型];
+                                                   OptionCaptionML=[ENU=" ,Acquisition Cost,Maintenance";
+                                                                    CHS=" ,购置成本,维修费用"];
+                                                   OptionString=[ ,Acquisition Cost,Maintenance] }
+    { 5602;   ;Depreciation Book Code;Code10      ;TableRelation="Depreciation Book";
+                                                   CaptionML=[ENU=Depreciation Book Code;
+                                                              CHS=折旧账簿代码] }
+    { 5603;   ;Salvage Value       ;Decimal       ;CaptionML=[ENU=Salvage Value;
+                                                              CHS=残值];
+                                                   AutoFormatType=1 }
+    { 5605;   ;Depr. until FA Posting Date;Boolean;CaptionML=[ENU=Depr. until FA Posting Date;
+                                                              CHS=至 FA 过账日期的折旧] }
+    { 5606;   ;Depr. Acquisition Cost;Boolean     ;CaptionML=[ENU=Depr. Acquisition Cost;
+                                                              CHS=折旧购置成本] }
+    { 5609;   ;Maintenance Code    ;Code10        ;TableRelation=Maintenance;
+                                                   CaptionML=[ENU=Maintenance Code;
+                                                              CHS=维修代码] }
+    { 5610;   ;Insurance No.       ;Code20        ;TableRelation=Insurance;
+                                                   CaptionML=[ENU=Insurance No.;
+                                                              CHS=保险编号] }
+    { 5611;   ;Budgeted FA No.     ;Code20        ;TableRelation="Fixed Asset";
+                                                   CaptionML=[ENU=Budgeted FA No.;
+                                                              CHS=预算 FA 编号] }
+    { 5612;   ;Duplicate in Depreciation Book;Code10;
+                                                   TableRelation="Depreciation Book";
+                                                   CaptionML=[ENU=Duplicate in Depreciation Book;
+                                                              CHS=在折旧账簿中的复件] }
+    { 5613;   ;Use Duplication List;Boolean       ;CaptionML=[ENU=Use Duplication List;
+                                                              CHS=使用复件列表] }
+    { 5700;   ;Responsibility Center;Code10       ;TableRelation="Responsibility Center";
+                                                   ValidateTableRelation=Yes;
+                                                   CaptionML=[ENU=Responsibility Center;
+                                                              CHS=责任中心] }
+    { 5705;   ;Cross-Reference No. ;Code20        ;CaptionML=[ENU=Cross-Reference No.;
+                                                              CHS=交叉-索引编号] }
+    { 5706;   ;Unit of Measure (Cross Ref.);Code10;TableRelation=IF (Type=CONST(Item)) "Item Unit of Measure".Code WHERE (Item No.=FIELD(No.));
+                                                   CaptionML=[ENU=Unit of Measure (Cross Ref.);
+                                                              CHS=计量单位(交叉索引)] }
+    { 5707;   ;Cross-Reference Type;Option        ;CaptionML=[ENU=Cross-Reference Type;
+                                                              CHS=交叉-索引类型];
+                                                   OptionCaptionML=[ENU=" ,Customer,Vendor,Bar Code";
+                                                                    CHS=" ,客户,供应商,条形码"];
+                                                   OptionString=[ ,Customer,Vendor,Bar Code] }
+    { 5708;   ;Cross-Reference Type No.;Code30    ;CaptionML=[ENU=Cross-Reference Type No.;
+                                                              CHS=交叉-索引类型编号] }
+    { 5709;   ;Item Category Code  ;Code10        ;TableRelation=IF (Type=CONST(Item)) "Item Category";
+                                                   CaptionML=[ENU=Item Category Code;
+                                                              CHS=物料目录代码] }
+    { 5710;   ;Nonstock            ;Boolean       ;CaptionML=[ENU=Nonstock;
+                                                              CHS=非库存] }
+    { 5711;   ;Purchasing Code     ;Code10        ;TableRelation=Purchasing;
+                                                   CaptionML=[ENU=Purchasing Code;
+                                                              CHS=采购代码] }
+    { 5712;   ;Product Group Code  ;Code10        ;TableRelation="Product Group".Code WHERE (Item Category Code=FIELD(Item Category Code));
+                                                   CaptionML=[ENU=Product Group Code;
+                                                              CHS=产品组代码] }
+    { 5805;   ;Return Qty. Shipped Not Invd.;Decimal;
+                                                   CaptionML=[ENU=Return Qty. Shipped Not Invd.;
+                                                              CHS=已发运但未开发票的退货数量];
+                                                   DecimalPlaces=0:5;
+                                                   Editable=No }
+    { 5817;   ;Correction          ;Boolean       ;CaptionML=[ENU=Correction;
+                                                              CHS=修正];
+                                                   Editable=No }
+    { 6602;   ;Order/Return Order No.;Code20      ;CaptionML=[ENU=Order/Return Order No.;
+                                                              CHS=订单/退货单编号];
+                                                   Editable=No }
+    { 6603;   ;Order/Return Order Line No.;Integer;CaptionML=[ENU=Order/Return Order Line No.;
+                                                              CHS=订单/退货单行编号];
+                                                   Editable=No }
+    { 6608;   ;Return Reason Code  ;Code10        ;TableRelation="Return Reason";
+                                                   CaptionML=[ENU=Return Reason Code;
+                                                              CHS=退货原因代码] }
+    { 50000;  ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              CHS=过帐日期] }
+    { 50001;  ;Document Date       ;Date          ;CaptionML=[ENU=Document Date;
+                                                              CHS=单据日期] }
+    { 50002;  ;Qty. Not Invoiced (Base);Decimal   ;CaptionML=[ENU=Qty. Not Invoiced (Base);
+                                                              CHS=未开票数量(基础)] }
+    { 50003;  ;Exchange Rate       ;Decimal       ;InitValue=1;
+                                                   CaptionML=[ENU=Exchange Rate;
+                                                              CHS=汇率] }
+    { 50004;  ;Interim Amount(Excl. VAT);Decimal  ;CaptionML=[ENU=Interim Amount(Excl. VAT);
+                                                              CHS=暂估金额(不含税)] }
+    { 50005;  ;Interim Amount(Incl. VAT);Decimal  ;CaptionML=[ENU=Interim Amount(Incl. VAT);
+                                                              CHS=暂估金额(含税)] }
+    { 50006;  ;Vendor/Customer Name;Text250       ;CaptionML=[ENU=Vendor/Customer Name;
+                                                              CHS=供应商/客户名称] }
+    { 50007;  ;Invoice Vendor/Customer Name;Text250;
+                                                   CaptionML=[ENU=Invoice Vendor/Customer Name;
+                                                              CHS=开票供应商/客户名称] }
+    { 50008;  ;Interim Amount(Excl. VAT FCY);Decimal;
+                                                   CaptionML=[ENU=Interim Amount(Excl. VAT FCY);
+                                                              CHS=暂估金额(不含税 FCY)] }
+    { 50009;  ;Interim Amount(Incl. VAT FCY);Decimal;
+                                                   CaptionML=[ENU=Interim Amount(Incl. VAT FCY);
+                                                              CHS=暂估金额(含税 FCY)] }
+    { 50010;  ;Interim VAT Amount  ;Decimal       ;CaptionML=[ENU=Interim VAT Amount;
+                                                              CHS=VAT暂估金额] }
+    { 50011;  ;Interim VAT Amount(FCY);Decimal    ;CaptionML=[ENU=Interim VAT Amount(FCY);
+                                                              CHS=VAT 暂估金额] }
+    { 50012;  ;Interim Inv. Cost   ;Decimal       ;CaptionML=[ENU=Interim Inv. Cost;
+                                                              CHS=暂估库存成本] }
+    { 50013;  ;Interim Inv. Cost (FCY);Decimal    ;CaptionML=[ENU=Interim Inv. Cost (FCY);
+                                                              CHS=暂估库存成本(FCY)] }
+  }
+  KEYS
+  {
+    {    ;Document Type,Document No.,Line No.     ;Clustered=Yes }
+    {    ;Order/Return Order No.,Order/Return Order Line No. }
+    {    ;Blanket Order No.,Blanket Order Line No. }
+    {    ;Invoice Vendor/Customer No.              }
+    {    ;Vendor/Customer No.                      }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      Currency@1004 : Record 4;
+      ReturnShptHeader@1000 : Record 6650;
+      DimMgt@1001 : Codeunit 408;
+      Text000@1003 : TextConst 'ENU=Return Shipment No. %1;CHS=退回发货编号 %1：';
+      Text001@1002 : TextConst 'ENU=The program cannot find this purchase line.;CHS=程序找不到此采购行。';
+      CurrencyRead@1005 : Boolean;
+      Vendor@1117700000 : Record 23;
+      PurchRcptHdr@1117700001 : Record 120;
+      ReturnShipHdr@1117700002 : Record 6650;
+      SaleShipHdr@1117700003 : Record 110;
+      ReturnRcptHdr@1117700004 : Record 6660;
+      Customer@1117700005 : Record 18;
+
+    PROCEDURE GetCurrencyCode@1() : Code[10];
+    BEGIN
+      IF "Document No." = ReturnShptHeader."No." THEN
+        EXIT(ReturnShptHeader."Currency Code");
+      IF ReturnShptHeader.GET("Document No.") THEN
+        EXIT(ReturnShptHeader."Currency Code");
+      EXIT('');
+    END;
+
+    PROCEDURE ShowItemTrackingLines@3();
+    VAR
+      ItemTrackingMgt@1000 : Codeunit 6500;
+    BEGIN
+      //ItemTrackingMgt.CallPostedItemTrackingForm(DATABASE
+    END;
+
+    PROCEDURE GetPurchCrMemoLines@4(VAR TempPurchCrMemoLine@1000 : TEMPORARY Record 125);
+    VAR
+      PurchCrMemoLine@1003 : Record 125;
+      ItemLedgEntry@1002 : Record 32;
+      ValueEntry@1001 : Record 5802;
+    BEGIN
+      TempPurchCrMemoLine.RESET;
+      TempPurchCrMemoLine.DELETEALL;
+
+      IF Type <> Type::Item THEN
+        EXIT;
+
+      FilterPstdDocLnItemLedgEntries(ItemLedgEntry);
+      ItemLedgEntry.SETFILTER("Invoiced Quantity",'<>0');
+      IF ItemLedgEntry.FINDSET THEN BEGIN
+        ValueEntry.SETCURRENTKEY("Item Ledger Entry No.","Entry Type");
+        ValueEntry.SETRANGE("Entry Type",ValueEntry."Entry Type"::"Direct Cost");
+        ValueEntry.SETFILTER("Invoiced Quantity",'<>0');
+        REPEAT
+          ValueEntry.SETRANGE("Item Ledger Entry No.",ItemLedgEntry."Entry No.");
+          IF ValueEntry.FINDSET THEN
+            REPEAT
+              IF ValueEntry."Document Type" = ValueEntry."Document Type"::"Purchase Credit Memo" THEN
+                IF PurchCrMemoLine.GET(ValueEntry."Document No.",ValueEntry."Document Line No.") THEN BEGIN
+                  TempPurchCrMemoLine.INIT;
+                  TempPurchCrMemoLine := PurchCrMemoLine;
+                  IF TempPurchCrMemoLine.INSERT THEN;
+                END;
+            UNTIL ValueEntry.NEXT = 0;
+        UNTIL ItemLedgEntry.NEXT = 0;
+      END;
+    END;
+
+    PROCEDURE FilterPstdDocLnItemLedgEntries@6(VAR ItemLedgEntry@1000 : Record 32);
+    BEGIN
+      ItemLedgEntry.RESET;
+      ItemLedgEntry.SETCURRENTKEY("Document No.");
+      ItemLedgEntry.SETRANGE("Document No.","Document No.");
+      ItemLedgEntry.SETRANGE("Document Type",ItemLedgEntry."Document Type"::"Purchase Return Shipment");
+      ItemLedgEntry.SETRANGE("Document Line No.","Line No.");
+    END;
+
+    PROCEDURE ShowItemLedgEntries@7();
+    VAR
+      ItemLedgEntry@1000 : Record 32;
+    BEGIN
+      IF Type = Type::Item THEN BEGIN
+        FilterPstdDocLnItemLedgEntries(ItemLedgEntry);
+        PAGE.RUNMODAL(0,ItemLedgEntry);
+      END;
+    END;
+
+    PROCEDURE ShowItemPurchCrMemoLines@9();
+    VAR
+      TempPurchCrMemoLine@1000 : TEMPORARY Record 125;
+    BEGIN
+      IF Type = Type::Item THEN BEGIN
+        GetPurchCrMemoLines(TempPurchCrMemoLine);
+        PAGE.RUNMODAL(0,TempPurchCrMemoLine);
+      END;
+    END;
+
+    LOCAL PROCEDURE InitCurrency@8(CurrencyCode@1001 : Code[10]);
+    BEGIN
+      IF (Currency.Code = CurrencyCode) AND CurrencyRead THEN
+        EXIT;
+
+      IF CurrencyCode <> '' THEN
+        Currency.GET(CurrencyCode)
+      ELSE
+        Currency.InitRoundingPrecision;
+      CurrencyRead := TRUE;
+    END;
+
+    PROCEDURE UpdateFieldInfo@1117700004("@PriceInclVAT"@1117700006 : Boolean);
+    VAR
+      _Vendor@1117700002 : Record 23;
+      _PurchRcptHdr@1117700001 : Record 120;
+      _ReturnShipHdr@1117700000 : Record 6650;
+      _Customer@1117700003 : Record 18;
+      _SaleShipHdr@1117700004 : Record 110;
+      _ReturnRcptHdr@1117700005 : Record 6660;
+    BEGIN
+      IF _Vendor.GET("Vendor/Customer No.") THEN BEGIN
+        "Vendor/Customer Name":=_Vendor.Name;
+        IF _Vendor."Name 2"<>'' THEN "Vendor/Customer Name"+=';'+_Vendor."Name 2";
+      END;
+
+      IF _Vendor.GET("Invoice Vendor/Customer No.") THEN BEGIN
+        "Invoice Vendor/Customer Name":=_Vendor.Name;
+        IF _Vendor."Name 2"<>'' THEN "Invoice Vendor/Customer Name"+=';'+_Vendor."Name 2";
+      END;
+
+      CASE "Document Type" OF
+        "Document Type"::Purchase: BEGIN
+          _PurchRcptHdr.GET("Document No.");
+          "Currency Code":=_PurchRcptHdr."Currency Code";
+          "Posting Date":=_PurchRcptHdr."Posting Date";
+          "Document Date":=_PurchRcptHdr."Document Date";
+          IF _PurchRcptHdr."Currency Factor"<>0 THEN
+            "Exchange Rate":=1/_PurchRcptHdr."Currency Factor";
+        END;
+
+        "Document Type"::"Purchase Return": BEGIN
+          _ReturnShipHdr.GET("Document No.");
+          "Currency Code":=_ReturnShipHdr."Currency Code";
+          "Posting Date":=_ReturnShipHdr."Posting Date";
+          "Document Date":= _ReturnShipHdr."Document Date";
+          IF _ReturnShipHdr."Currency Factor"<>0 THEN
+            "Exchange Rate":=1/_ReturnShipHdr."Currency Factor";
+        END;
+
+        "Document Type"::Sales: BEGIN
+          _SaleShipHdr.GET("Document No.");
+          "Currency Code":=_SaleShipHdr."Currency Code";
+          "Posting Date":=_SaleShipHdr."Posting Date";
+          "Document Date":=_SaleShipHdr."Document Date";
+          IF _SaleShipHdr."Currency Factor"<>0 THEN
+            "Exchange Rate":=1/_SaleShipHdr."Currency Factor";
+        END;
+
+        "Document Type"::"Sales Return": BEGIN
+          _ReturnRcptHdr.GET("Document No.");
+          "Currency Code":=_ReturnRcptHdr."Currency Code";
+          "Posting Date":=_ReturnRcptHdr."Posting Date";
+          "Document Date":=_ReturnRcptHdr."Document Date";
+          IF _ReturnRcptHdr."Currency Factor"<>0 THEN
+            "Exchange Rate":=1/_ReturnRcptHdr."Currency Factor";
+        END;
+      END;
+
+      "Qty. Not Invoiced (Base)":="Quantity (Base)"-"Qty. Invoiced (Base)";
+      "Interim Inv. Cost":="Unit Cost (LCY)"*"Qty. Not Invoiced";
+      "Interim Inv. Cost (FCY)":="Unit Cost"*"Qty. Not Invoiced";
+
+      CASE "Document Type" OF
+        "Document Type"::"Purchase Return": BEGIN
+          IF "@PriceInclVAT" THEN BEGIN
+            "Interim Amount(Excl. VAT)":="Direct Unit Cost/Unit Price"/(1+"VAT %"/100)*"Qty. Not Invoiced"*"Exchange Rate";
+            "Interim Amount(Incl. VAT)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*"Exchange Rate";
+            "Interim Amount(Excl. VAT FCY)":="Direct Unit Cost/Unit Price"/(1+"VAT %"/100)*"Qty. Not Invoiced";
+            "Interim Amount(Incl. VAT FCY)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced";
+            "Interim VAT Amount":="Interim Amount(Excl. VAT)"*("VAT %"/100);
+            "Interim VAT Amount(FCY)":="Interim Amount(Excl. VAT FCY)"*("VAT %"/100);
+          END ELSE BEGIN
+            "Interim Amount(Excl. VAT)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*"Exchange Rate";
+            "Interim Amount(Incl. VAT)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*(1+"VAT %"/100)*"Exchange Rate";
+            "Interim Amount(Excl. VAT FCY)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced";
+            "Interim Amount(Incl. VAT FCY)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*(1+"VAT %"/100);
+            "Interim VAT Amount":="Interim Amount(Excl. VAT)"*("VAT %"/100);
+            "Interim VAT Amount(FCY)":="Interim Amount(Excl. VAT FCY)"*("VAT %"/100);
+          END;
+        END;
+
+        "Document Type"::Purchase: BEGIN
+          IF "@PriceInclVAT" THEN BEGIN
+            "Interim Amount(Excl. VAT)":=-("Direct Unit Cost/Unit Price"/(1+"VAT %"/100)*"Qty. Not Invoiced"*"Exchange Rate");
+            "Interim Amount(Incl. VAT)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*"Exchange Rate");
+            "Interim Amount(Excl. VAT FCY)":=-("Direct Unit Cost/Unit Price"/(1+"VAT %"/100)*"Qty. Not Invoiced");
+            "Interim Amount(Incl. VAT FCY)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced");
+            "Interim VAT Amount":=-("Interim Amount(Excl. VAT)"*("VAT %"/100));
+            "Interim VAT Amount(FCY)":=-("Interim Amount(Excl. VAT FCY)"*("VAT %"/100));
+          END ELSE BEGIN
+            "Interim Amount(Excl. VAT)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*"Exchange Rate");
+            "Interim Amount(Incl. VAT)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*(1+"VAT %"/100)*"Exchange Rate");
+            "Interim Amount(Excl. VAT FCY)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced");
+            "Interim Amount(Incl. VAT FCY)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*(1+"VAT %"/100));
+            "Interim VAT Amount":=-("Interim Amount(Excl. VAT)"*("VAT %"/100));
+            "Interim VAT Amount(FCY)":=-("Interim Amount(Excl. VAT FCY)"*("VAT %"/100));
+          END;
+
+        END;
+
+        "Document Type"::Sales: BEGIN
+          IF "@PriceInclVAT" THEN BEGIN
+            "Interim Amount(Excl. VAT)":="Direct Unit Cost/Unit Price"/(1+"VAT %"/100)*"Qty. Not Invoiced"*"Exchange Rate";
+            "Interim Amount(Incl. VAT)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*"Exchange Rate";
+            "Interim Amount(Excl. VAT FCY)":="Direct Unit Cost/Unit Price"/(1+"VAT %"/100)*"Qty. Not Invoiced";
+            "Interim Amount(Incl. VAT FCY)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced";
+            "Interim VAT Amount":="Interim Amount(Excl. VAT)"*("VAT %"/100);
+            "Interim VAT Amount(FCY)":="Interim Amount(Excl. VAT FCY)"*("VAT %"/100);
+          END ELSE BEGIN
+            "Interim Amount(Excl. VAT)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*"Exchange Rate";
+            "Interim Amount(Incl. VAT)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*(1+"VAT %"/100)*"Exchange Rate";
+            "Interim Amount(Excl. VAT FCY)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced";
+            "Interim Amount(Incl. VAT FCY)":="Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*(1+"VAT %"/100);
+            "Interim VAT Amount":="Interim Amount(Excl. VAT)"*("VAT %"/100);
+            "Interim VAT Amount(FCY)":="Interim Amount(Excl. VAT FCY)"*("VAT %"/100);
+          END;
+        END;
+
+        "Document Type"::"Sales Return": BEGIN
+          IF "@PriceInclVAT" THEN BEGIN
+          "Interim Amount(Excl. VAT)":=-("Direct Unit Cost/Unit Price"/(1+"VAT %"/100)*"Qty. Not Invoiced"*"Exchange Rate");
+          "Interim Amount(Incl. VAT)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*"Exchange Rate");
+          "Interim Amount(Excl. VAT FCY)":=-("Direct Unit Cost/Unit Price"/(1+"VAT %"/100)*"Qty. Not Invoiced");
+          "Interim Amount(Incl. VAT FCY)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced");
+          "Interim VAT Amount":=-("Interim Amount(Excl. VAT)"*("VAT %"/100));
+          "Interim VAT Amount(FCY)":=-("Interim Amount(Excl. VAT FCY)"*("VAT %"/100));
+          END ELSE BEGIN
+            "Interim Amount(Excl. VAT)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*"Exchange Rate");
+            "Interim Amount(Incl. VAT)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*(1+"VAT %"/100)*"Exchange Rate");
+            "Interim Amount(Excl. VAT FCY)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced");
+            "Interim Amount(Incl. VAT FCY)":=-("Direct Unit Cost/Unit Price"*"Qty. Not Invoiced"*(1+"VAT %"/100));
+            "Interim VAT Amount":=-("Interim Amount(Excl. VAT)"*("VAT %"/100));
+            "Interim VAT Amount(FCY)":=-("Interim Amount(Excl. VAT FCY)"*("VAT %"/100));
+          END;
+        END;
+
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

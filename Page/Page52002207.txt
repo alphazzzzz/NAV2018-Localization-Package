@@ -1,0 +1,61 @@
+OBJECT Page 52002207 Gen. Journal Batch List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=16:38:52;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table232;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1117700000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1117700003;2;Field  ;
+                SourceExpr=Name }
+
+    { 1117700001;2;Field  ;
+                SourceExpr="Journal Template Name" }
+
+    { 1117700005;2;Field  ;
+                SourceExpr=Description }
+
+    { 1117700007;2;Field  ;
+                SourceExpr="Reason Code" }
+
+    { 1117700009;2;Field  ;
+                SourceExpr="Bal. Account Type" }
+
+    { 1117700011;2;Field  ;
+                SourceExpr="Bal. Account No." }
+
+    { 1117700013;2;Field  ;
+                SourceExpr="No. Series" }
+
+    { 1117700015;2;Field  ;
+                SourceExpr="Posting No. Series" }
+
+    { 1117700017;2;Field  ;
+                SourceExpr="Copy VAT Setup to Jnl. Lines" }
+
+    { 1117700019;2;Field  ;
+                SourceExpr="Allow VAT Difference" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

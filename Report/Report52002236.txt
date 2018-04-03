@@ -1,0 +1,207 @@
+OBJECT Report 52002236 Import GoldTax XML File
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/29/17;
+    Time=18:08:13;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    TransactionType=Update;
+    CaptionML=[ENU=Import Jinsui interface file;
+               CHS=输入金穗接口文件];
+    ProcessingOnly=Yes;
+    OnPreReport=VAR
+                  l_txtString@1000 : Text[200];
+                  l_intPos@1001 : Integer;
+                  I@1002 : Integer;
+                  Instream@1003 : InStream;
+                BEGIN
+                  g_intInvoiceNumber:=1;
+
+                  IF NOT FILE.EXISTS(g_txtFileName) THEN
+                    EXIT;
+
+                  g_fileMyFile.WRITEMODE(FALSE);
+                  g_fileMyFile.TEXTMODE(TRUE);
+                  g_XMLInL:=g_XMLInL.XmlDocument();
+                  IF g_fileMyFile.OPEN(g_txtFileName) THEN BEGIN
+                    g_fileMyFile.CREATEINSTREAM(Instream);
+                    g_XMLInL.Load(Instream);
+                    g_XMLNODE2:=g_XMLInL.SelectSingleNode('//Kp/Fpxx/Zsl');
+                    IF EVALUATE(g_intInvoiceNumber,g_XMLNODE2.InnerText) THEN;
+                    g_XMLNodeList:=g_XMLInL.SelectNodes('//Kp/Fpxx/Fpsj/Fp');
+                    g_fileMyFile.CLOSE;
+                  END ELSE BEGIN
+                    MESSAGE(Text005);
+                  END;
+                END;
+
+    OnPostReport=BEGIN
+                   MESSAGE(Text004);
+                 END;
+
+  }
+  DATASET
+  {
+    { 6640;    ;DataItem;                    ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number)
+                                 WHERE(Number=CONST(1));
+               OnAfterGetRecord=VAR
+                                  l_recGTInvoiceLine@1000000000 : Record 52002201;
+                                  l_txtDocNo@1000 : Text;
+                                  l_decAmountIncVAT@1001 : Decimal;
+                                  l_decVATAmount@1002 : Decimal;
+                                  l_txtStrArray@1003 : ARRAY [24] OF Text[100];
+                                  l_intI@1004 : Integer;
+                                  l_txtDjh@1005 : Text;
+                                  l_txtGTInvoiceNo@1006 : Text;
+                                  l_string@1007 : Text;
+                                BEGIN
+                                  FOREACH g_XMLNode IN g_XMLNodeList DO BEGIN
+                                    g_XMLInL2:=g_XMLNode;
+                                    g_XMLNode:=g_XMLInL2.SelectSingleNode('Djh');
+                                    l_txtDjh:=g_XMLNode.InnerText;
+                                    g_XMLNode:=g_XMLInL2.SelectSingleNode('Fphm');
+                                    l_txtGTInvoiceNo:=g_XMLNode.InnerText;
+                                    IF NOT g_recGTInvoice.GET(l_txtDjh) THEN
+                                      ERROR(Text008,l_txtDjh);
+
+                                    WITH l_recGTInvoiceLine DO BEGIN
+                                      RESET;
+                                      SETRANGE("Navision Doc No.",g_recGTInvoice."Navision Doc No.");
+                                      SETRANGE("Doc Type",g_recGTInvoice."Doc Type");
+                                      SETRANGE("JinSui Invoice No",g_recGTInvoice."JinSui Invoice No");
+                                      IF FINDFIRST THEN BEGIN
+                                        REPEAT
+                                          "JinSui Invoice No":=l_txtGTInvoiceNo;
+                                          "Import DateTime":=CURRENTDATETIME;
+                                          MODIFY;
+                                        UNTIL NEXT=0;
+                                      END;
+                                    END;
+                                  END;
+                                END;
+                                 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=选项;
+                             CHS=选项] }
+
+      { 1000000000;2;Field  ;
+                  Name=File Name;
+                  SourceExpr=g_txtFileName;
+                  OnAssistEdit=BEGIN
+                                 g_txtFileto:= TEMPORARYPATH+'RTCImportGoldTax.xml';
+                                 IF NOT UPLOAD('Import Golden Tax File','','*.xml|*.xml','',g_txtFileto) THEN  ERROR('chucuole');
+                                 g_txtFileName:= g_txtFileto;
+                               END;
+                                }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      g_txtFileName@1000000000 : Text[250];
+      Text001@1000000001 : TextConst 'ENU=Open the golden tax generation file;CHS=打开金税生成文件';
+      g_fileMyFile@1000000002 : File;
+      g_txtString@1000000003 : Text[900];
+      g_txtInvNum@1000000004 : Text[30];
+      Text002@1000000005 : TextConst 'ENU=~~;CHS=~~';
+      Text003@1000000006 : TextConst 'ENU=,;CHS=,';
+      g_txtStrArray@1000000007 : ARRAY [24] OF Text[100];
+      Text004@1000000008 : TextConst 'ENU=The import ends.;CHS=导入结束.';
+      Text005@1000000009 : TextConst 'ENU=Can not open file.;CHS=无法打开文件.';
+      Text006@1000000010 : TextConst 'ENU=Navision Doc. No.% 1 has not yet exported the Golden Tax interface file.;CHS=Navision 文档 %1尚未导出金税接口文件.';
+      g_codSalesInvoiceNo@1000 : Code[20];
+      g_txtFileto@1001 : Text[900];
+      g_intPos@1002 : Integer;
+      Text007@1006 : TextConst 'ENU=Upload file to server failed.;CHS=上传文件到服务器失败。';
+      g_recGTInvoice@1003 : Record 52002201;
+      Text008@1004 : TextConst 'ENU=Can not find GT invoice line with navision doc no.% 1!;CHS=无法找到单据号为%1的金税发票行!';
+      Text009@1005 : TextConst 'ENU=The imported file format does not match, please re-upload!;CHS=导入的文件格式不符，请重新上传！';
+      g_XMLInL@1007 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      g_XMLNodeList@1008 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+      g_XMLNodeList2@1013 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeList";
+      g_XMLNode@1011 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      g_XMLElement@1012 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlElement";
+      g_XMLElement2@1014 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlElement";
+      g_intInvoiceNumber@1009 : Integer;
+      g_XMLNODE2@1010 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      g_XMLInL2@1015 : DotNet "'System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+
+    EVENT g_XMLInL@1007::NodeInserting@94(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL@1007::NodeInserted@95(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL@1007::NodeRemoving@96(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL@1007::NodeRemoved@97(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL@1007::NodeChanging@98(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL@1007::NodeChanged@99(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL2@1015::NodeInserting@94(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL2@1015::NodeInserted@95(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL2@1015::NodeRemoving@96(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL2@1015::NodeRemoved@97(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL2@1015::NodeChanging@98(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    EVENT g_XMLInL2@1015::NodeChanged@99(sender@1001 : Variant;e@1000 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNodeChangedEventArgs");
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

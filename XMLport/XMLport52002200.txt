@@ -1,0 +1,360 @@
+OBJECT XMLport 52002200 Chinese Fin Report Data
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=16:06:32;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    Direction=Both;
+    Format/Evaluate=C/SIDE Format/Evaluate;
+    TextEncoding=UTF-8;
+    Format=Variable Text;
+    FieldSeparator=@@@;
+  }
+  ELEMENTS
+  {
+    { [{2FBA29F2-D740-4DD5-81DE-F1C08BB4F853}];  ;AccScheduleName     ;Element ;Text    ;
+                                                  VariableName=<AccScheduleName1>;
+                                                  MinOccurs=Zero }
+
+    { [{8E2E9679-E684-4DFC-A1AD-E0DD81234BB0}];1 ;Acc.ScheduleName    ;Element ;Table   ;
+                                                  ReqFilterFields=Field1;
+                                                  SourceTable=Table84;
+                                                  AutoUpdate=Yes;
+                                                  MinOccurs=Zero }
+
+    { [{BAECF81B-D23F-49FC-BC2F-5509D467C342}];2 ;name                ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Acc. Schedule Name::Name;
+                                                  MaxOccurs=Once }
+
+    { [{D0B49A29-1E6E-495A-A3D3-B9C0F98C1997}];2 ;desc                ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  FieldValidate=No;
+                                                  SourceField=Acc. Schedule Name::Description }
+
+    { [{55DACB33-B0C5-41DE-BC36-270ADA916AF5}];2 ;def                 ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=No;
+                                                  AutoCalcField=No;
+                                                  SourceField=Acc. Schedule Name::Default Column Layout;
+                                                  MinOccurs=Once }
+
+    { [{3EB6F972-A0C6-497B-83E1-1D8FCD88899F}];2 ;Ana                 ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=No;
+                                                  AutoCalcField=No;
+                                                  SourceField=Acc. Schedule Name::Analysis View Name }
+
+    { [{0858435B-985E-49E6-AFF6-6D7D890F4976}];2 ;lefts               ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Acc. Schedule Name::Left Starting Line }
+
+    { [{6B54A865-016C-4B6D-9782-B10986ED0FC6}];2 ;lefte               ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Acc. Schedule Name::Left Ending Line }
+
+    { [{D0E7D330-DD52-4A59-9F57-7A25E89C01C4}];2 ;rights              ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Acc. Schedule Name::Right Starting Line }
+
+    { [{71F85A60-1D9A-4FD8-958E-479E07BC53D0}];2 ;righte              ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Acc. Schedule Name::Right Ending Line }
+
+    { [{022A8BA6-ED87-447F-AB7A-7A8D0A7B71EA}];2 ;reportid            ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Acc. Schedule Name::Report ID;
+                                                  MinOccurs=Once;
+                                                  MaxOccurs=Once }
+
+    { [{D4C5EFA3-4370-4F65-87DA-9402A5EBA549}];1 ;Acc.ScheduleLine    ;Element ;Table   ;
+                                                  ReqFilterFields=Field1;
+                                                  SourceTable=Table85;
+                                                  AutoUpdate=Yes;
+                                                  MinOccurs=Zero;
+                                                  MaxOccurs=Unbounded }
+
+    { [{AA35A21E-EAD3-423D-9C96-AB0EE0E4970D}];2 ;ScheduleName        ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=No;
+                                                  AutoCalcField=No;
+                                                  SourceField=Acc. Schedule Line::Schedule Name }
+
+    { [{A5006A39-0B82-42A1-BCB2-77160132E5A6}];2 ;LineNo              ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Acc. Schedule Line::Line No. }
+
+    { [{8DA73267-A459-4665-869F-AAF48FBBCB32}];2 ;rowno               ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Acc. Schedule Line::Row No. }
+
+    { [{A08EFCB1-6F8B-4CAE-9A72-C476D9307061}];2 ;desc                ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Acc. Schedule Line::Description }
+
+    { [{B919DCF5-2127-4225-B4DC-8BC086EB413D}];2 ;totaling            ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  FieldValidate=No;
+                                                  AutoCalcField=No;
+                                                  SourceField=Acc. Schedule Line::Totaling }
+
+    { [{CAE872E9-D583-4B7D-AF5F-129F1266AB8F}];2 ;totaltypy           ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  FieldValidate=No;
+                                                  AutoCalcField=No;
+                                                  SourceField=Acc. Schedule Line::Totaling Type }
+
+    { [{D1A2C4DE-F50D-43E9-B989-D602213AE652}];2 ;newpage             ;Element ;Field   ;
+                                                  DataType=Boolean;
+                                                  SourceField=Acc. Schedule Line::New Page }
+
+    { [{E2AB0281-D1BB-4BD6-B785-1AE664220107}];2 ;rowtype             ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  SourceField=Acc. Schedule Line::Row Type }
+
+    { [{0A138B30-6D8E-4ADB-8093-AEBBD95C6E16}];2 ;datefilter          ;Element ;Field   ;
+                                                  DataType=Date;
+                                                  SourceField=Acc. Schedule Line::Date Filter }
+
+    { [{7BB5649C-2704-4616-8230-6EA6E12AFE25}];2 ;dimension1filter    ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Acc. Schedule Line::Dimension 1 Filter }
+
+    { [{49882EFF-E37E-4D82-833E-83D20F853446}];2 ;dimension2filter    ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Acc. Schedule Line::Dimension 2 Filter }
+
+    { [{6D8413A1-831F-41D8-AB51-13638EE7B7B2}];2 ;GLBudget            ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Acc. Schedule Line::G/L Budget Filter }
+
+    { [{FD35F638-D251-4D5D-B4B8-B4B61CEF3930}];2 ;business            ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Acc. Schedule Line::Business Unit Filter }
+
+    { [{C23BCE8E-1EA5-41CC-B3EA-C2A95981291E}];2 ;show                ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  FieldValidate=No;
+                                                  AutoCalcField=No;
+                                                  SourceField=Acc. Schedule Line::Show }
+
+    { [{E93F83E4-47F1-40C1-85E0-662B8A8C2839}];2 ;dimension3filter    ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Acc. Schedule Line::Dimension 3 Filter }
+
+    { [{067C3F9E-50E6-4843-97B4-8224C27AB1EA}];2 ;dimension4filter    ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Acc. Schedule Line::Dimension 4 Filter }
+
+    { [{544BBFBC-DB24-41F7-B5F8-CC1F7C35CE2E}];2 ;dimension1t         ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Acc. Schedule Line::Dimension 1 Totaling }
+
+    { [{7988CB04-D823-4B6C-9D62-2869A89C4B54}];2 ;dimension2t         ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Acc. Schedule Line::Dimension 2 Totaling }
+
+    { [{71736725-ABD4-4444-B269-438D18F3602B}];2 ;dimension3t         ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Acc. Schedule Line::Dimension 3 Totaling }
+
+    { [{9C9FED81-6683-46CF-954C-C0457A407425}];2 ;dimension4t         ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Acc. Schedule Line::Dimension 4 Totaling }
+
+    { [{8FC387C1-9A36-48CD-B87A-1C26D2202FA6}];2 ;bold                ;Element ;Field   ;
+                                                  DataType=Boolean;
+                                                  SourceField=Acc. Schedule Line::Bold }
+
+    { [{B91B0439-B8CD-4C6F-9D8A-BC41FA8E7DFC}];2 ;italic              ;Element ;Field   ;
+                                                  DataType=Boolean;
+                                                  SourceField=Acc. Schedule Line::Italic }
+
+    { [{D72D896A-4832-499C-9018-5530CF31B0FB}];2 ;underline           ;Element ;Field   ;
+                                                  DataType=Boolean;
+                                                  SourceField=Acc. Schedule Line::Underline }
+
+    { [{A367F10A-5861-475D-AA2A-82FDB45EDC61}];2 ;showoption          ;Element ;Field   ;
+                                                  DataType=Boolean;
+                                                  SourceField=Acc. Schedule Line::Show Opposite Sign }
+
+    { [{4570AC7F-B963-4BA3-B304-ECD801C0991C}];2 ;amountc             ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Acc. Schedule Line::Amount Calculation }
+
+    { [{B549326A-E1C4-48D5-9795-DB98A0434837}];2 ;desc2               ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Acc. Schedule Line::Description 2 }
+
+    { [{4327E094-B5E1-4330-97FB-79ED6BC0B5D1}];1 ;ColumnLayout        ;Element ;Table   ;
+                                                  ReqFilterFields=Field1;
+                                                  SourceTable=Table334;
+                                                  AutoUpdate=Yes;
+                                                  MinOccurs=Zero;
+                                                  Import::OnAfterInitRecord=BEGIN
+                                                                              IF NOT ColumnLayoutName.GET('CHSREPORT') THEN BEGIN
+                                                                                                       ColumnLayoutName.INIT;
+                                                                                                       ColumnLayoutName.VALIDATE(Name,'CHSREPORT');
+                                                                                                       ColumnLayoutName.INSERT(TRUE);
+                                                                                                      END;
+                                                                            END;
+
+                                                  Import::OnAfterInsertRecord=BEGIN
+                                                                                //currXMLport.SKIP;
+                                                                              END;
+                                                                               }
+
+    { [{145EE116-6B02-440B-8B16-EFEBC14714A0}];2 ;collayout           ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Column Layout::Column Layout Name }
+
+    { [{A2BCA4B1-603A-4052-BF1C-27D906EECA47}];2 ;lineno              ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Column Layout::Line No. }
+
+    { [{82749CE8-405B-47EF-9EC6-753A5C579F4E}];2 ;columnno            ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Column Layout::Column No. }
+
+    { [{ACAF78A8-651E-4F56-A0AF-23398EE5B4D0}];2 ;columnheader        ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Column Layout::Column Header }
+
+    { [{E7578928-2725-4624-AA16-71A42613D3C0}];2 ;columntype          ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  SourceField=Column Layout::Column Type }
+
+    { [{6288C15A-3989-4677-97BA-01EAE0233BA9}];2 ;ledgeentry          ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  SourceField=Column Layout::Ledger Entry Type }
+
+    { [{1619921A-D7EB-4D7A-A403-A78C4555A030}];2 ;amouttype           ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  SourceField=Column Layout::Amount Type }
+
+    { [{05030027-C678-4E34-8DDD-FA000397F686}];2 ;formula             ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Column Layout::Formula }
+
+    { [{B5DC9963-7BBE-4754-B161-F8727ABD5B14}];2 ;compar              ;Element ;Field   ;
+                                                  DataType=DateFormula;
+                                                  SourceField=Column Layout::Comparison Date Formula }
+
+    { [{17B0703F-D648-4794-B3AE-F8FFF9109AE1}];2 ;showoppo            ;Element ;Field   ;
+                                                  DataType=Boolean;
+                                                  SourceField=Column Layout::Show Opposite Sign }
+
+    { [{58621699-3E85-4226-A0E7-0B9F1D4E5698}];2 ;show                ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  SourceField=Column Layout::Show }
+
+    { [{F54CDDB0-B45E-486F-84E3-BFA69EF98431}];2 ;rounding            ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  SourceField=Column Layout::Rounding Factor }
+
+    { [{87D080DA-C90B-496E-8CA7-1BA5A3084ECD}];2 ;comp                ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Column Layout::Comparison Period Formula }
+
+    { [{59AF1C31-34F8-47BF-A676-5078C5D57866}];1 ;DimensionCode1      ;Element ;Table   ;
+                                                  ReqFilterFields=Field1;
+                                                  VariableName=<Dimension1>;
+                                                  SourceTable=Table348;
+                                                  AutoUpdate=Yes;
+                                                  MinOccurs=Zero }
+
+    { [{2288063B-CC86-401F-97E3-C263B65A08E5}];2 ;DimCode1            ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=<Dimension1>::Code }
+
+    { [{6481848D-1151-4DA2-9CA8-84E75F7973D7}];2 ;DimName1            ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=<Dimension1>::Name }
+
+    { [{9D36EFB2-137A-4A30-B69D-68702A14A08D}];1 ;DimensionValue      ;Element ;Table   ;
+                                                  ReqFilterFields=Field1;
+                                                  SourceTable=Table349;
+                                                  AutoUpdate=Yes;
+                                                  MinOccurs=Zero;
+                                                  Import::OnAfterInitRecord=BEGIN
+                                                                              IF NOT Dimension.GET('CASHFLOW') THEN BEGIN
+                                                                                                        Dimension.INIT;
+                                                                                                        Dimension.VALIDATE(Code,'CASHFLOW');
+                                                                                                        Dimension.INSERT(TRUE);
+                                                                                                      END;
+                                                                            END;
+                                                                             }
+
+    { [{3C98BA66-DF08-4EAE-B896-F74055B6A155}];2 ;dimcode             ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Dimension Value::Dimension Code }
+
+    { [{2BACB47C-06C6-48C8-B286-062BA7DF4CB0}];2 ;code                ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Dimension Value::Code }
+
+    { [{5CF6DADB-C289-4D72-9464-5182C3C52D47}];2 ;name                ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Dimension Value::Name }
+
+    { [{A1504CD1-B77D-46FB-B02E-A5600BFF00BB}];2 ;dimtype             ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  SourceField=Dimension Value::Dimension Value Type }
+
+    { [{2764F192-D4E6-4353-AE05-9983F31AFC01}];2 ;total               ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Dimension Value::Totaling }
+
+    { [{3E250A06-D29D-4FF4-9998-F997A9E71366}];2 ;block               ;Element ;Field   ;
+                                                  DataType=Boolean;
+                                                  SourceField=Dimension Value::Blocked }
+
+    { [{0DD069BD-5038-4A07-88F4-8E848C1FF188}];2 ;consoli             ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Dimension Value::Consolidation Code }
+
+    { [{92B94F90-DFBE-429E-A1C5-F457F6F80909}];2 ;indent              ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Dimension Value::Indentation }
+
+    { [{5839F80A-CE42-4F3C-9AF5-0E4C336B6C7E}];2 ;globaldim           ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Dimension Value::Global Dimension No. }
+
+    { [{49B8D800-B564-459E-9C04-E37B67E3A9ED}];2 ;m1                  ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Dimension Value::Map-to IC Dimension Code }
+
+    { [{8478512D-DFF5-4413-92D7-EC2BBF7A7493}];2 ;m2                  ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Dimension Value::Map-to IC Dimension Value Code }
+
+  }
+  EVENTS
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  CODE
+  {
+    VAR
+      Dimension@1000000000 : Record 348;
+      ColumnLayoutName@1000000001 : Record 333;
+
+    BEGIN
+    END.
+  }
+}
+

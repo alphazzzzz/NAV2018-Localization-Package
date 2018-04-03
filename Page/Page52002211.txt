@@ -1,0 +1,92 @@
+OBJECT Page 52002211 Local Report Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:35:52;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Local Report Setup;
+               CHS=本地化报表设置];
+    SourceTable=Table52002202;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1117700000;1;Group  ;
+                CaptionML=[ENU=Cash Flow Statement;
+                           CHS=Cash Flow Statement] }
+
+    { 1117700001;2;Field  ;
+                SourceExpr="Account Schedule Name 1" }
+
+    { 1117700003;2;Field  ;
+                SourceExpr="Column Layout Name 1" }
+
+    { 1117700005;2;Field  ;
+                SourceExpr="Cash Flow Dimension Code" }
+
+    { 1904868101;1;Group  ;
+                CaptionML=[ENU=Income Statement;
+                           CHS=Income Statement] }
+
+    { 1117700016;2;Field  ;
+                SourceExpr="Account Schedule Name 2" }
+
+    { 1117700018;2;Field  ;
+                SourceExpr="Column Layout Name 2" }
+
+    { 1907029001;1;Group  ;
+                CaptionML=[ENU=Balance Sheet;
+                           CHS=资产负债表] }
+
+    { 1117700022;2;Field  ;
+                SourceExpr="Account Schedule Name 3" }
+
+    { 1117700020;2;Field  ;
+                SourceExpr="Column Layout Name 3" }
+
+    { 1900020901;1;Group  ;
+                CaptionML=[ENU=Voucher;
+                           CHS=凭证] }
+
+    { 1117700024;2;Field  ;
+                SourceExpr="Voucher Description" }
+
+    { 1117700026;2;Field  ;
+                SourceExpr="Use Account Description 2" }
+
+    { 1117700028;2;Field  ;
+                SourceExpr="Use Account No. 2" }
+
+    { 1117700007;2;Field  ;
+                SourceExpr="Dimension Print Code 1" }
+
+    { 1117700009;2;Field  ;
+                SourceExpr="Dimension Print Code 2" }
+
+    { 1117700011;2;Field  ;
+                SourceExpr="Dimension Print Code 3" }
+
+    { 1117700013;2;Field  ;
+                SourceExpr="Dimension Print Code 4" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      2011/03/24, Ivan Sun, CHACN1.001, CHA Income Statement
+        2011/03/24, Ivan Sun, CHACN1.001: Show fields "Account Schedule Name 4", "Column Layout Name 4"
+    }
+    END.
+  }
+}
+

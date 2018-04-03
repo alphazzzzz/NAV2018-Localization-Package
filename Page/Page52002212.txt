@@ -1,0 +1,275 @@
+OBJECT Page 52002212 Inv.Cost /AP Interim Page
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:35:52;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Inv.Cost /AP Interim;
+               CHS=库存成本/应付暂估];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    ModifyAllowed=No;
+    SourceTable=Table52002204;
+    SourceTableView=SORTING(Document Type,Document No.,Line No.)
+                    WHERE(Type=CONST(Item),
+                          Quantity=FILTER(<>0));
+    PageType=Card;
+    SourceTableTemporary=Yes;
+    AutoSplitKey=Yes;
+    OnOpenPage=BEGIN
+                 DELETEALL;
+                 LoadData(FALSE);
+               END;
+
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1117700035;1;Field  ;
+                CaptionML=[ENU=Price Include VAT;
+                           CHS=价格含税];
+                SourceExpr=PriceInclVAT;
+                OnValidate=BEGIN
+                             PriceInclVATOnPush;
+                             PriceInclVATOnAfterValidate;
+                           END;
+                            }
+
+    { 1   ;1   ;Group     ;
+                Editable=FALSE;
+                GroupType=Repeater }
+
+    { 1117700015;2;Field  ;
+                SourceExpr="Posting Date" }
+
+    { 1117700017;2;Field  ;
+                SourceExpr="Document Date" }
+
+    { 1117700007;2;Field  ;
+                SourceExpr="Document Type" }
+
+    { 1117700005;2;Field  ;
+                CaptionML=[ENU=Document No.;
+                           CHS=单据编号];
+                SourceExpr="Document No." }
+
+    { 1117700000;2;Field  ;
+                CaptionML=[ENU=Vendor No.;
+                           CHS=供应商编号];
+                SourceExpr="Vendor/Customer No." }
+
+    { 1117700002;2;Field  ;
+                CaptionML=[ENU=Vendor Name;
+                           CHS=供应商名字];
+                SourceExpr="Vendor/Customer Name" }
+
+    { 1117700010;2;Field  ;
+                CaptionML=[ENU=Invoice Vendor No.;
+                           CHS=开票供应商编码];
+                SourceExpr="Invoice Vendor/Customer No." }
+
+    { 1117700012;2;Field  ;
+                CaptionML=[ENU=Invoice Vendor Name;
+                           CHS=开票供应商名称];
+                SourceExpr="Invoice Vendor/Customer Name" }
+
+    { 4   ;2   ;Field     ;
+                CaptionML=[ENU=Item No.;
+                           CHS=物料编号];
+                SourceExpr="No." }
+
+    { 6   ;2   ;Field     ;
+                CaptionML=[ENU=Item Description;
+                           CHS=物料说明];
+                SourceExpr=Description }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="Return Reason Code";
+                Visible=FALSE }
+
+    { 38  ;2   ;Field     ;
+                SourceExpr="Location Code" }
+
+    { 50  ;2   ;Field     ;
+                SourceExpr="Bin Code";
+                Visible=FALSE }
+
+    { 24  ;2   ;Field     ;
+                SourceExpr="Unit of Measure Code" }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="Unit of Measure";
+                Visible=FALSE }
+
+    { 1117700003;2;Field  ;
+                SourceExpr="Currency Code" }
+
+    { 1117700024;2;Field  ;
+                SourceExpr="Exchange Rate" }
+
+    { 8   ;2   ;Field     ;
+                BlankZero=Yes;
+                SourceExpr=Quantity }
+
+    { 12  ;2   ;Field     ;
+                BlankZero=Yes;
+                SourceExpr="Quantity Invoiced" }
+
+    { 1117700032;2;Field  ;
+                CaptionML=[ENU=Direct Unit Cost;
+                           CHS=直接单位成本];
+                SourceExpr="Direct Unit Cost/Unit Price" }
+
+    { 1117700019;2;Field  ;
+                SourceExpr="Unit Cost (LCY)" }
+
+    { 1117700014;2;Field  ;
+                CaptionML=[ENU=VAT %;
+                           CHS=增值税];
+                SourceExpr="VAT %"/100 }
+
+    { 1117700038;2;Field  ;
+                SourceExpr="Interim Inv. Cost" }
+
+    { 1117700040;2;Field  ;
+                SourceExpr="Interim Inv. Cost (FCY)" }
+
+    { 1117700026;2;Field  ;
+                SourceExpr="Interim Amount(Excl. VAT)" }
+
+    { 1117700028;2;Field  ;
+                SourceExpr="Interim Amount(Incl. VAT)" }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Visible=FALSE }
+
+    { 40  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Visible=FALSE }
+
+    { 1117700021;1;Field  ;
+                CaptionML=[ENU=Total Interim Amount(Excl. VAT);
+                           CHS=暂估金额合计(不含税)];
+                SourceExpr=TotalInterimAmtExclVAT;
+                Editable=FALSE }
+
+    { 1117700030;1;Field  ;
+                CaptionML=[ENU=Total Interim Amount(Incl. VAT);
+                           CHS=暂估金额合计(含税)];
+                SourceExpr=TotalInterimAmtIncVAT;
+                Editable=FALSE }
+
+  }
+  CODE
+  {
+    VAR
+      TotalInterimAmtIncVAT@1117700000 : Decimal;
+      TotalInterimAmtExclVAT@1117700001 : Decimal;
+      PriceInclVAT@1117700002 : Boolean;
+
+    PROCEDURE ShowTracking@1();
+    VAR
+      ItemLedgEntry@1000 : Record 32;
+      TempItemLedgEntry@1002 : TEMPORARY Record 32;
+      TrackingPage@1001 : Page 99000822;
+    BEGIN
+      TESTFIELD(Type,Type::Item);
+      IF "Item Entry No." <> 0 THEN BEGIN
+        ItemLedgEntry.GET("Item Entry No.");
+        TrackingPage.SetItemLedgEntry(ItemLedgEntry);
+      END ELSE
+        TrackingPage.SetMultipleItemLedgEntries(TempItemLedgEntry,
+          DATABASE::"Purch. Rcpt. Line",0,"Document No.",'',0,"Line No.");
+
+      TrackingPage.RUNMODAL;
+    END;
+
+    PROCEDURE ShowDimensions@8();
+    BEGIN
+      //Rec.ShowDimensions;
+    END;
+
+    PROCEDURE ShowItemTrackingLines@6500();
+    BEGIN
+      Rec.ShowItemTrackingLines;
+    END;
+
+    PROCEDURE UndoReceiptLine@2();
+    VAR
+      PurchRcptLine@1002 : Record 121;
+    BEGIN
+      PurchRcptLine.COPY(Rec);
+      CurrPage.SETSELECTIONFILTER(PurchRcptLine);
+      CODEUNIT.RUN(CODEUNIT::"Undo Purchase Receipt Line",PurchRcptLine);
+    END;
+
+    PROCEDURE ShowItemPurchInvLines@4();
+    BEGIN
+      TESTFIELD(Type,Type::Item);
+      //Rec.ShowItemPurchInvLines;
+    END;
+
+    PROCEDURE LoadData@1117700000("@PriceInclVAT"@1117700002 : Boolean);
+    VAR
+      _PurchRcptLine@1117700000 : Record 121;
+      _ReturnShipLine@1117700001 : Record 6651;
+    BEGIN
+      TotalInterimAmtIncVAT:=0;
+      TotalInterimAmtExclVAT:=0;
+
+      _PurchRcptLine.RESET;
+      _PurchRcptLine.SETRANGE(Type,_PurchRcptLine.Type::Item);
+      _PurchRcptLine.SETFILTER(Quantity,'<>0');
+      IF _PurchRcptLine.FINDFIRST THEN
+        REPEAT
+          INIT;
+          TRANSFERFIELDS(_PurchRcptLine);
+          "Document Type":="Document Type"::Purchase;
+          "Order/Return Order No.":=_PurchRcptLine."Order No.";
+          "Order/Return Order Line No.":=_PurchRcptLine."Order Line No.";
+          UpdateFieldInfo("@PriceInclVAT");
+          INSERT;
+          TotalInterimAmtIncVAT+="Interim Amount(Incl. VAT)";
+          TotalInterimAmtExclVAT+="Interim Amount(Excl. VAT)"
+        UNTIL _PurchRcptLine.NEXT=0;
+
+      _ReturnShipLine.RESET;
+      _ReturnShipLine.SETRANGE(Type,_ReturnShipLine.Type::Item);
+      _ReturnShipLine.SETFILTER(Quantity,'<>0');
+      IF _ReturnShipLine.FINDFIRST THEN
+        REPEAT
+          INIT;
+          TRANSFERFIELDS(_ReturnShipLine);
+          "Document Type":="Document Type"::"Purchase Return";
+          UpdateFieldInfo("@PriceInclVAT");
+          INSERT;
+          TotalInterimAmtIncVAT+="Interim Amount(Incl. VAT)";
+          TotalInterimAmtExclVAT+="Interim Amount(Excl. VAT)";
+
+        UNTIL _ReturnShipLine.NEXT=0;
+    END;
+
+    LOCAL PROCEDURE PriceInclVATOnAfterValidate@19010439();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE PriceInclVATOnPush@19038694();
+    BEGIN
+      DELETEALL;
+      LoadData(PriceInclVAT);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

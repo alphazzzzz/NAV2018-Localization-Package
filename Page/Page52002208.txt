@@ -1,0 +1,49 @@
+OBJECT Page 52002208 Fin WorkFlow Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=15:58:23;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Fin WorkFlow Setup;
+               CHS=财务工作流设置];
+    SourceTable=Table52002202;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1117700000;1;Group  ;
+                CaptionML=[ENU=General;
+                           CHS=常规] }
+
+    { 1117700002;2;Field  ;
+                SourceExpr=Submit }
+
+    { 1117700008;2;Field  ;
+                SourceExpr="Enable Unified Voucher No." }
+
+    { 1903100501;1;Group  ;
+                CaptionML=[ENU=No. Series;
+                           CHS=编号号码串] }
+
+    { 1117700020;2;Field  ;
+                CaptionML=[ENU=Voucher No. Series;
+                           CHS=凭证编号];
+                SourceExpr="Voucher Nos" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

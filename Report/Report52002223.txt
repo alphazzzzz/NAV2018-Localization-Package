@@ -1,0 +1,124 @@
+OBJECT Report 52002223 Delete Transaction Entry
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=11:35:53;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Delete Transaction Entry;
+               CHS=删除交易记录];
+    ProcessingOnly=Yes;
+    OnPreReport=BEGIN
+                  IF BlnDelEntry THEN
+                    IF CONFIRM(Text001) THEN BEGIN
+                     DeleteTransRecord(Txt_EntryTableList1);
+                     DeleteTransRecord(Txt_EntryTableList2);
+                    END;
+                  IF BlnDelDoc THEN
+                    IF CONFIRM(Text002) THEN BEGIN
+                      DeleteTransRecord(Txt_DocTableList1);
+                      DeleteTransRecord(Txt_DocTableList2);
+                    END;
+
+                  IF BlnDelEntry OR BlnDelDoc THEN
+                    DeleteTransRecord(Txt_RegTableList);
+                END;
+
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=选项;
+                             CHS=选项] }
+
+      { 1000000000;2;Field  ;
+                  CaptionML=[ENU=删除所有交易分录;
+                             CHS=删除所有交易分录];
+                  SourceExpr=BlnDelEntry }
+
+      { 1000000001;2;Field  ;
+                  CaptionML=[ENU=删除所有已过账文档;
+                             CHS=删除所有已过账文档];
+                  SourceExpr=BlnDelDoc }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Txt_EntryTableList1@1000000005 : TextConst 'ENU=17,21,25,32,160,169,179,203,238,254,265,271,272,281,282,300,317,337,338,339,343,355,365,379,380,386,454,456,458,472,474,1004;CHS=17,21,25,32,160,169,179,203,238,254,265,271,272,281,282,300,317,337,338,339,343,355,365,379,380,386,454,456,458,472,474,1004';
+      BlnDelEntry@1000000000 : Boolean;
+      BlnDelDoc@1000000001 : Boolean;
+      Txt_EntryTableList2@1117700000 : TextConst 'ENU=1.0051015506551E+99;CHS=1.0051015506551E+99';
+      Txt_DocTableList1@1000000004 : TextConst 'ENU=1.1011111211311E+133;CHS=1.1011111211311E+133';
+      Txt_DocTableList2@1117700001 : TextConst 'ENU=5.9945995655067E+139;CHS=5.9945995655067E+139';
+      Txt_RegTableList@1000000006 : TextConst 'ENU=45,46,87,239,240,241,5616,5617,5636,5772,5773,5934,5936,7313;CHS=45,46,87,239,240,241,5616,5617,5636,5772,5773,5934,5936,7313';
+      Text001@1000000002 : TextConst 'ENU=Are your sure to delete all transaction entry ?;CHS=确定删除所有交易分录?';
+      Text002@1000000003 : TextConst 'ENU=Are your sure to delete all posted document ?;CHS=确定删除所有已过账文档?';
+      Text003@1117700002 : TextConst 'ENU=Deleting...#1########\@2@@@@@@@@@@@@@@@@@@@@;CHS=删除...#1########\@2@@@@@@@@@@@@@@@@@@@';
+      AllObj@1117700003 : Record 2000000038;
+
+    PROCEDURE DeleteTransRecord@1000000006("@tableIDList"@1000000001 : Text[1024]);
+    VAR
+      _TableRef@1000000005 : RecordRef;
+      _SubStrCount@1000000004 : Integer;
+      _I@1000000003 : Integer;
+      _SubStrPos@1000000002 : Integer;
+      _TableID@1000000000 : Integer;
+      _xTableIDList@1000000006 : Text[1024];
+      _TxtTableID@1117700000 : Text[30];
+      _Windows@1117700001 : Dialog;
+    BEGIN
+      _xTableIDList:="@tableIDList";
+      _SubStrCount:=0;
+      _SubStrPos:=0;
+      _Windows.OPEN(Text003);
+
+      WHILE STRPOS(_xTableIDList,',')>0 DO BEGIN
+        _SubStrPos:=STRPOS(_xTableIDList,',');
+        _SubStrCount+=1;
+        _xTableIDList:=DELSTR(_xTableIDList,_SubStrPos,1);
+      END;
+
+      FOR _I:=1 TO (_SubStrCount+1) DO BEGIN
+        _TxtTableID:=SELECTSTR(_I,"@tableIDList");
+        IF EVALUATE(_TableID,_TxtTableID) THEN BEGIN
+          IF AllObj.GET(AllObj."Object Type"::TableData,_TableID) THEN BEGIN
+            _TableRef.OPEN(_TableID);
+            _Windows.UPDATE(1,_TableRef.CAPTION);
+            _TableRef.DELETEALL;
+            _Windows.UPDATE(2,ROUND(_I/(_SubStrCount+1),0.0001)*10000);
+            _TableRef.CLOSE;
+          END;
+        END;
+      END;
+
+      _Windows.CLOSE;
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

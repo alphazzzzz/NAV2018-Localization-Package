@@ -1,0 +1,485 @@
+OBJECT Report 52002215 Export GoldTax Inf file
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=11:27:45;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Output Jinsui Interface file;
+               CHS=输出金税接口文件];
+    ProcessingOnly=Yes;
+    OnInitReport=BEGIN
+                   GTSetup.GET;
+                 END;
+
+    OnPreReport=BEGIN
+                  IF GTSetup."Max Invoice Lines" <=0 THEN ERROR(Err001);
+
+                  IF GTSetup."Max Invoice Amount" <=0 THEN ERROR(Err003);
+                  IF GTSetup."Goods Tax No."='' THEN ERROR(ERR004);
+                  outFile.WRITEMODE(TRUE);
+                  outFile.TEXTMODE(TRUE);
+
+                  IF bAppendFile AND  FILE.EXISTS(outFileName) THEN BEGIN
+                     outFile.OPEN(outFileName);
+                     outFile.SEEK(outFile.LEN);
+
+                  END ELSE BEGIN
+                   IF outFile.CREATE(TEMPORARYPATH+'1.txt')=FALSE THEN
+                    ERROR(Err002,TEMPORARYPATH+'1.txt');
+                    // outFile.QUERYREPLACE(TRUE);
+                   //  IF outFile.CREATE(outFileName)=FALSE THEN ERROR(Err002,outFileName);
+                  END;
+
+                  outFile.WRITE(' ');
+                  outFile.WRITE('SJJK0101~~output sales documents~~'+"Sales Header".GETFILTER("No."));
+                  outFile.WRITE(' ');
+                END;
+
+    OnPostReport=BEGIN
+                   //MESSAGE(txt003,outFileName);
+                   outFile.CLOSE;
+                   IF outFileName ='' THEN
+                      outFileName:='C'+"Sales Header"."No.";
+                    DOWNLOAD(TEMPORARYPATH+'1.txt',Text0011,'',Text0012,outFileName);
+                 END;
+
+  }
+  DATASET
+  {
+    { 6640;    ;DataItem;                    ;
+               DataItemTable=Table36;
+               DataItemTableView=SORTING(Document Type,No.);
+               OnAfterGetRecord=BEGIN
+                                  IF Status <> Status::Released THEN  ERROR(ERR013,"No.");
+
+                                  WITH JSInvoiceLine DO BEGIN
+                                    SETRANGE("Navision Doc No.","No.");
+                                    SETRANGE("Doc Type","Document Type");
+                                    IF FIND('-') THEN
+                                      REPEAT
+                                        IF "Import DateTime" <> 0DT THEN ERROR(ERR011,"Navision Doc No.");
+                                        DELETE;
+                                      UNTIL NEXT=0;
+                                    RESET;
+                                  END;
+                                END;
+
+               ReqFilterFields=Document Type,No.,Bill-to Customer No. }
+
+    { 2844;1   ;DataItem;                    ;
+               DataItemTable=Table37;
+               DataItemTableView=SORTING(Document Type,Document No.,Line No.);
+               OnPreDataItem=BEGIN
+                               totalAmount := 0;
+                               totalAmountIncVAT :=0;
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  ItemChargeAssignment@1117700006 : Record 5809;
+                                  l_JinShui@1117700005 : Record 52002201;
+                                  l_SalesLine@1117700004 : Record 37;
+                                  ItemChangeAmountIncVAT@1117700003 : Decimal;
+                                  ItemChargeQty@1117700002 : Decimal;
+                                  ItemChgPriceIncVat@1117700001 : Decimal;
+                                  ItemChangeAmountExlVAT@1117700000 : Decimal;
+                                BEGIN
+                                  IF (Type<>Type::Item) OR ("Unit Price"=0) THEN CurrReport.SKIP;
+
+                                  //Expense Apportion
+                                  ItemChargeAssignment.SETRANGE(ItemChargeAssignment."Applies-to Doc. Type","Document Type") ;
+                                  ItemChargeAssignment.SETRANGE(ItemChargeAssignment."Applies-to Doc. No.","Document No.");
+                                  ItemChargeAssignment.SETRANGE(ItemChargeAssignment."Applies-to Doc. Line No.","Sales Line"."Line No.");
+                                  ItemChargeAssignment.SETRANGE(ItemChargeAssignment."Item No.","Sales Line"."No.");
+                                  ItemChargeAssignment.SETFILTER(ItemChargeAssignment."Qty. to Assign",'>0');
+                                  IF ItemChargeAssignment.FIND('-') THEN
+                                    REPEAT
+                                      IF "Sales Header"."Prices Including VAT" THEN BEGIN
+                                         ItemChargeQty += ItemChargeAssignment."Qty. to Assign";
+                                         ItemChangeAmountIncVAT += ItemChargeAssignment."Amount to Assign"*(1+"VAT %"*0.01);
+                                         ItemChangeAmountExlVAT += ItemChargeAssignment."Amount to Assign";
+                                      END ELSE BEGIN
+                                         ItemChargeQty += ItemChargeAssignment."Qty. to Assign";
+                                         ItemChangeAmountExlVAT += ItemChargeAssignment."Amount to Assign";
+                                         ItemChangeAmountIncVAT += ItemChargeAssignment."Amount to Assign"*(1+"VAT %"*0.01);
+                                      END;
+                                    UNTIL ItemChargeAssignment.NEXT=0;
+
+                                  IF GTSetup."Expense Apportion" THEN BEGIN
+                                    "Amount Including VAT"+=ItemChangeAmountIncVAT;
+                                    Amount+=ItemChangeAmountExlVAT;
+                                    IF "Sales Header"."Prices Including VAT" THEN
+                                      "Unit Price":="Amount Including VAT"/Quantity
+                                    ELSE
+                                      "Unit Price":=(("Unit Price"*Quantity)+ItemChangeAmountExlVAT)/Quantity;
+                                  END;
+
+                                  lineAmountIncVAT := "Amount Including VAT";
+                                  unitPriceIncVAT := lineAmountIncVAT/Quantity;
+
+                                  totalAmount += Amount;
+                                  totalAmountIncVAT += "Amount Including VAT";
+                                  remQuantity := Quantity;
+
+                                  IF(("Unit Price" > GTSetup."Max Invoice Amount") AND (NOT bSplitDec) ) THEN
+                                    ERROR(ERR010,"Document No.","No.",GTSetup."Max Invoice Amount");
+
+
+                                  IF lineAmountIncVAT >= GTSetup."Max Invoice Amount" THEN BEGIN
+                                     REPEAT
+
+                                       IF bSplitDec THEN
+                                         splitQuantity := ROUND((GTSetup."Max Invoice Amount"/unitPriceIncVAT),0.01,'<')
+                                       ELSE
+                                         splitQuantity := ROUND((GTSetup."Max Invoice Amount"/unitPriceIncVAT),1,'<');
+
+                                       IF splitQuantity<=0 THEN ERROR(ERR012);
+
+                                       remQuantity -=splitQuantity;
+                                       InsJinSuiLine("Sales Line",splitQuantity,"Sales Header"."Prices Including VAT");
+
+                                     UNTIL remQuantity <= splitQuantity;
+
+                                     IF (remQuantity = splitQuantity ) THEN
+                                       InsJinSuiLine("Sales Line",splitQuantity,"Sales Header"."Prices Including VAT")
+                                     ELSE
+                                       IF remQuantity > 0 THEN InsJinSuiLine("Sales Line",remQuantity,"Sales Header"."Prices Including VAT");
+
+                                  END ELSE BEGIN
+
+                                     InsJinSuiLine("Sales Line",Quantity,"Sales Header"."Prices Including VAT");
+
+                                  END
+                                END;
+
+               OnPostDataItem=BEGIN
+                                removeRoundError("Sales Header");
+                              END;
+
+               DataItemLink=Document No.=FIELD(No.) }
+
+    { 5024;1   ;DataItem;                    ;
+               DataItemTable=Table52002201;
+               DataItemTableView=SORTING(Navision Phantom No.);
+               OnAfterGetRecord=BEGIN
+                                  InvLineNumber :=CountOutputJSLine("GT Invoice Line","Sales Header",GTSetup."Max Invoice Lines",GTSetup."Max Invoice Amount");
+                                  OutputHeader("Sales Header",FORMAT(InvLineNumber),"Navision Phantom No.");
+                                END;
+
+               DataItemLink=Navision Doc No.=FIELD(No.) }
+
+    { 5444;2   ;DataItem;                    ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number);
+               OnPreDataItem=BEGIN
+                               SETRANGE(Number,1,InvLineNumber);
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  IF Number=1 THEN
+                                    OutputLine("GT Invoice Line")
+                                  ELSE IF ("GT Invoice Line".NEXT<>0) THEN OutputLine("GT Invoice Line");
+                                END;
+                                 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             CHS=选项];
+                  GroupType=Group }
+
+      { 1117700000;2;Group  ;
+                  CaptionML=[ENU=Option;
+                             CHS=选项] }
+
+      { 1117700009;3;Field  ;
+                  CaptionML=[ENU=Split Quantity into Decimal;
+                             CHS=Split Quantity into Decimal];
+                  SourceExpr=bSplitDec }
+
+      { 1117700014;3;Field  ;
+                  CaptionML=[ENU=Append to File;
+                             CHS=Append to File];
+                  SourceExpr=bAppendFile }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      outFile@1117700000 : File;
+      JSInvoiceLine@1117700017 : Record 52002201;
+      outFileName@1117700018 : Text[200];
+      bSplitDec@1117700024 : Boolean;
+      bAppendFile@1117700032 : Boolean;
+      lineAmountIncVAT@1117700025 : Decimal;
+      unitPriceIncVAT@1117700026 : Decimal;
+      remQuantity@1117700027 : Decimal;
+      splitQuantity@1117700028 : Decimal;
+      totalAmountIncVAT@1117700030 : Decimal;
+      totalAmount@1117700031 : Decimal;
+      InvLineNumber@1117700033 : Integer;
+      GTSetup@1117700034 : Record 52002200;
+      g_ItemChgAmountIncVAT@1117700023 : Decimal;
+      g_ItemChgQty@1117700022 : Decimal;
+      g_ItemChgPriceIncVat@1117700021 : Decimal;
+      g_ItemChgAmountExlVAT@1117700020 : Decimal;
+      MakerName@1117700019 : Text[30];
+      Err001@1000000018 : TextConst 'ENU=Please input the Max Line Number.;CHS=本地化包设置输入最大行编号。';
+      Err002@1000000017 : TextConst 'ENU=Can''t Create the %1.;CHS=无法创建 %1.';
+      Err003@1000000016 : TextConst 'ENU=Please input the Limited Amount.;CHS=请输入限制金额。';
+      txt003@1000000015 : TextConst 'ENU=Exported to %1 successfully.;CHS=成功导出至%1.';
+      txt001@1000000014 : TextConst 'ENU=Document No.:#1#############\\;CHS=文档编号';
+      txt002@1000000013 : TextConst 'ENU=Document Line No.:  #2#############;CHS=文档行编号';
+      ERR012@1000000012 : TextConst 'ENU=Data is error;CHS=数据错误';
+      ERR013@1000000011 : TextConst 'ENU=Please release document %1 first.;CHS=请先释放文档 %1.';
+      ERR004@1000000010 : TextConst 'ENU=Commodity Tax No should not be empty.;CHS=商品税编号不能为空';
+      ERR005@1000000009 : TextConst 'ENU=Document %1: Bill-to Customer''s VAT Registration No. shall not be empty.;CHS=文件 %1 VAT 登记号为空';
+      ERR006@1000000008 : TextConst 'ENU=Document %1: Bill-to Address or Customer Phone Number shall not be empty.;CHS=文件 %1 客户地址或电话为空';
+      ERR007@1000000007 : TextConst 'ENU=Check Custemer Bank Account %1;CHS=检查客户银行账目 %1';
+      ERR008@1000000006 : TextConst 'ENU=Description is Null %1;CHS=描述为空 %1';
+      ERR009@1000000005 : TextConst 'ENU=Document %1, Line%2: Unit of Measure shall not be empty.;CHS="文件 %1 计量单位为空 "';
+      ERR010@1000000004 : TextConst 'ENU=Document %1, Line%2: Unit Price should not be greater than %3;CHS=单价大于发票最大金额 在 %1';
+      ERR011@1000000003 : TextConst 'ENU=Document %1 has been imported and it can''t be exported again.;CHS=文件 %1已经导入，不能再次导入.';
+      Text0011@1000000002 : TextConst 'ENU=<Export to TXT File>;CHS=<导出TXT文件>';
+      Text0012@1000000001 : TextConst 'ENU=<TXT Files (*.txt)|*.txt|All Files (*.*)|*.*>;CHS=<TXT Files (*.txt)|*.txt|All Files (*.*)|*.*>';
+      Text0013@1000000000 : TextConst 'ENU=<Default.txt>;CHS=<Default.txt>';
+
+    PROCEDURE InsJinSuiLine@1117700002(l_Salesline@1117700000 : Record 37;Quantity@1117700001 : Decimal;bIncVAT@1117700002 : Boolean);
+    VAR
+      l_JSInvoiceLine@1117700003 : Record 52002201;
+      l_NoFilter@1117700004 : Code[20];
+      l_CurrSubInvNum@1117700005 : Code[20];
+    BEGIN
+      l_NoFilter := l_Salesline."Document No."+'-'+'???';
+      l_JSInvoiceLine.SETFILTER("Navision Phantom No.",l_NoFilter);
+      l_CurrSubInvNum :='0';
+      IF l_JSInvoiceLine.FIND('+') THEN
+        l_CurrSubInvNum := COPYSTR(l_JSInvoiceLine."Navision Phantom No.", STRLEN(l_JSInvoiceLine."Navision Phantom No.")-2,3);
+
+      l_JSInvoiceLine.INIT;
+
+      WITH l_JSInvoiceLine DO BEGIN
+
+        "SalesLine No." := l_Salesline."No.";
+        "Navision Doc No." := l_Salesline."Document No.";
+        "Navision Phantom No." :=l_Salesline."Document No."+'-'+INCSTR(l_CurrSubInvNum);
+
+        IF getDiscriptionSetup=1 THEN  Description := l_Salesline.Description;
+
+        IF getDiscriptionSetup=2 THEN  Description := l_Salesline."Description 2";
+
+        "Unit of Measure" := l_Salesline."Unit of Measure";
+        "Line Quantity" := Quantity;
+        "Unit Price" := l_Salesline."Unit Price";
+        "VAT%" := l_Salesline."VAT %";
+        GST := GTSetup."Goods Tax No.";
+        "Discount %" := l_Salesline."Line Discount %";
+        "Doc Type" :=l_Salesline."Document Type";
+
+        "Export DateTime" := CURRENTDATETIME;
+        "Sell-to Customer No." := l_Salesline."Sell-to Customer No.";
+
+        IF bIncVAT THEN  BEGIN
+          "Amount Inc. VAT" := ROUND(l_Salesline."Unit Price" * "Line Quantity"*(1-"Discount %"*0.01),0.01);
+          "Amount Exc. VAT" := ROUND(l_Salesline."Unit Price" * "Line Quantity"*(1-"Discount %"*0.01)/(1+l_Salesline."VAT %"*0.01),0.01)
+      ;
+          "VAT Amount" :="Amount Inc. VAT"-"Amount Exc. VAT";
+          "Discount Amount" :="Amount Inc. VAT" * l_Salesline."Line Discount %"*0.01;
+
+        END ELSE BEGIN
+          "Amount Inc. VAT" := ROUND(l_Salesline."Unit Price" * "Line Quantity"*(1+l_Salesline."VAT %"*0.01)*(1-"Discount %"*0.01),0.01)
+      ;
+          "Amount Exc. VAT" := ROUND(l_Salesline."Unit Price" * "Line Quantity"*(1-"Discount %"*0.01),0.01);
+          "VAT Amount" :="Amount Inc. VAT"-"Amount Exc. VAT";
+          "Discount Amount" := "Amount Exc. VAT" * l_Salesline."Line Discount %"*0.01;
+        END;
+        INSERT(TRUE);
+      END;
+    END;
+
+    PROCEDURE getDiscriptionSetup@1117700006() : Integer;
+    VAR
+      l_SRSetup@1117700000 : Record 311;
+    BEGIN
+      IF GTSetup."Item Desc"=GTSetup."Item Desc"::"Item Desc 1" THEN
+           EXIT(1);
+      IF GTSetup."Item Desc"=GTSetup."Item Desc"::"Item Desc 2" THEN
+          EXIT(2);
+    END;
+
+    PROCEDURE removeRoundError@1117700000(l_SalesHeader@1117700000 : Record 36);
+    VAR
+      l_JSInvLine@1117700001 : Record 52002201;
+      l_Amount@1117700002 : Decimal;
+      l_AmountIncVAT@1117700003 : Decimal;
+    BEGIN
+      WITH l_JSInvLine DO BEGIN
+        SETRANGE("Navision Doc No.",l_SalesHeader."No.");
+
+        IF FIND('-') THEN BEGIN
+          REPEAT
+            l_Amount += "Amount Exc. VAT";
+            l_AmountIncVAT += "Amount Inc. VAT";
+          UNTIL NEXT=0;
+
+          IF ((totalAmount-l_Amount)<>0) OR
+             ((totalAmountIncVAT-l_AmountIncVAT)<> 0) THEN BEGIN
+            "Amount Exc. VAT" +=totalAmount-l_Amount;
+             "Amount Inc. VAT" +=totalAmountIncVAT-l_AmountIncVAT;
+          END;
+          MODIFY;
+        END;
+
+      END;
+    END;
+
+    PROCEDURE CountOutputJSLine@1117700007(l_JSInvLine@1117700000 : Record 52002201;l_SalesHeader@1117700003 : Record 36;l_maxInvLine@1117700004 : Integer;l_maxInvAmount@1117700005 : Decimal) : Integer;
+    VAR
+      l_AmountIncVAT@1117700001 : Decimal;
+      l_OutputLine@1117700002 : Integer;
+    BEGIN
+      WITH l_JSInvLine DO BEGIN
+        SETRANGE("Doc Type",l_SalesHeader."Document Type");
+        SETRANGE("Navision Doc No.",l_SalesHeader."No.");
+        FIND;
+        l_AmountIncVAT :=0;
+        l_OutputLine :=0;
+
+        REPEAT
+
+          IF l_OutputLine=l_maxInvLine THEN EXIT(l_OutputLine);
+
+          IF l_AmountIncVAT+"Amount Inc. VAT" <= l_maxInvAmount THEN BEGIN
+
+             l_AmountIncVAT +="Amount Inc. VAT";
+             l_OutputLine +=1;
+
+          END ELSE
+
+             EXIT(l_OutputLine);
+
+        UNTIL NEXT=0;
+
+        EXIT(l_OutputLine);
+      END;
+    END;
+
+    PROCEDURE OutputHeader@1117700003("Sales Header"@1117700001 : Record 36;MaxLineNum@1117700003 : Text[30];"Phantom No."@1117700004 : Code[20]);
+    VAR
+      Customer@1117700000 : Record 18;
+      CustomerBank@1117700002 : Record 287;
+      ReturnKey@1117700005 : Text[30];
+      DocHeader@1117700006 : Text[1024];
+      charReturnKey@1117700007 : Char;
+    BEGIN
+      DocHeader :='';
+      charReturnKey :=13;
+      ReturnKey :=FORMAT(charReturnKey);
+
+      WITH "Sales Header" DO BEGIN
+       DocHeader := "Phantom No."+'~~'+MaxLineNum+'~~'+"Bill-to Name"+'~~';
+
+
+       Customer.GET("Bill-to Customer No.");
+
+       "VAT Registration No." := DELCHR("VAT Registration No.", '=',ReturnKey);
+
+       "Bill-to Address" := DELCHR("Bill-to Address",'=',ReturnKey);
+       Customer."Phone No." := DELCHR(Customer."Phone No.",'=', ReturnKey);
+       "No." := DELCHR("No.",'=', ReturnKey);
+
+       IF ("VAT Registration No." = '') THEN
+         ERROR(ERR005, "No.");
+       IF ("Sales Header"."Bill-to Address" = '') AND (Customer."Phone No." = '') THEN
+         ERROR(ERR006, "No.");
+
+       DocHeader += "VAT Registration No." + '~~'+ "Bill-to Address"+Customer."Phone No."+'~~';
+       CustomerBank.SETRANGE(CustomerBank."Customer No.","Bill-to Customer No.");
+
+       IF (CustomerBank.FIND('-')) AND ((CustomerBank.Name + CustomerBank."Bank Account No.") <> '') THEN BEGIN
+         CustomerBank.Name := DELCHR(CustomerBank.Name, '=', ReturnKey);
+         CustomerBank."Bank Account No." := DELCHR(CustomerBank."Bank Account No.", '=', ReturnKey);
+         DocHeader +=  CustomerBank.Name + CustomerBank."Bank Account No.";
+       END
+       ELSE
+
+         ERROR(ERR007, "No.");
+
+       DocHeader += '~~'+"Sales Header"."No.";
+
+       DocHeader +='~~'+GTSetup.Checker+'~~'+GTSetup.Payee;
+      END;
+
+      outFile.WRITE(' ');
+      outFile.WRITE(DocHeader);
+    END;
+
+    PROCEDURE OutputLine@1117700011(l_JSInvLine@1117700000 : Record 52002201);
+    VAR
+      "Item Translation"@1117700001 : Record 30;
+      "Unit of Measure Translation"@1117700002 : Record 5402;
+      ReturnKey@1117700003 : Text[30];
+      charReturnKey@1117700004 : Char;
+      DocLine@1117700005 : Text[1024];
+    BEGIN
+      charReturnKey := 13;
+      ReturnKey := FORMAT(charReturnKey);
+
+      WITH l_JSInvLine DO BEGIN
+
+        IF "Item Translation".GET("SalesLine No.", '', 'CHS') THEN
+          Description := "Item Translation".Description;
+
+        Description := DELCHR(Description, '=', ReturnKey);
+
+        IF (Description = '') THEN
+          ERROR(ERR008,"Navision Doc No.", "SalesLine No.");
+
+        IF "Unit of Measure Translation".GET("Unit of Measure", 'CHS') THEN
+          "Unit of Measure" := "Unit of Measure Translation".Description;
+
+        "Unit of Measure" := DELCHR("Unit of Measure", '=', ReturnKey);
+
+        IF ("Unit of Measure" = '') THEN
+          ERROR(ERR009, "Navision Doc No.", "SalesLine No.");
+
+         DocLine := Description + '~~' + "Unit of Measure" + '~~'+ "SalesLine No." + '~~';
+
+         DocLine += FORMAT("Line Quantity",0,1) + '~~' + FORMAT("Amount Inc. VAT",0,1)
+                           + '~~' + FORMAT("VAT%"*0.01,0,1) + '~~' +FORMAT(GST,0,1)
+                           + '~~' + FORMAT("Discount Amount",0,1)
+                           + '~~' + FORMAT("VAT Amount",0,1)
+                           + '~~' + FORMAT("VAT Discount Amount",0,1)
+                           + '~~' + FORMAT("Discount %",0,1)
+                           + '~~' + FORMAT("Unit Price",0,1);
+      END;
+
+      outFile.WRITE(DocLine);
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

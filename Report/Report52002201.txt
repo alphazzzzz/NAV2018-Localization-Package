@@ -1,0 +1,2247 @@
+OBJECT Report 52002201 Chinese Cash Flow Statement
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=11:18:46;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Chinese Cash Flow Statement;
+               CHS=现金流量表];
+    OnInitReport=BEGIN
+                   DateFilterMin:=100101D;
+                   DateFilterMax:=100131D;
+                 END;
+
+    OnPreReport=BEGIN
+                  CompanyInfo.GET;
+                END;
+
+  }
+  DATASET
+  {
+    { 7769;    ;DataItem;                    ;
+               DataItemTable=Table85;
+               OnPreDataItem=BEGIN
+                               //#1-->
+                               "Acc. Schedule Line".SETFILTER("Acc. Schedule Line"."Date Filter",DateFilter);
+                               //#1<--
+                               IF "Acc. Schedule Line".GETFILTER("Date Filter") = '' THEN
+                                  ERROR(Text50010);
+                               DateFilterMax := "Acc. Schedule Line".GETRANGEMAX("Date Filter");
+                               //#3-->
+                               DateFilterMin := "Acc. Schedule Line".GETRANGEMIN("Date Filter");
+                               //#3<--
+
+                               //4-->
+
+                               Type := Type::B;
+
+                               //4<--
+                             END;
+
+               ReqFilterFields=Dimension 1 Filter,Dimension 2 Filter,Business Unit Filter }
+
+    { 5444;    ;DataItem;                    ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+                               //>>#5 Tectura
+                               LocalizationPackageSetup.GET;
+                               IF NOT ChineseReportSetup.GET(LocalizationPackageSetup."Account Schedule Name 1") THEN
+                                 ERROR(Text50000);
+                               IF NOT ColumnLayout.GET(LocalizationPackageSetup."Column Layout Name 1") THEN
+                                 ERROR(Text6000);
+                               TempColum.SETRANGE("Column Layout Name",LocalizationPackageSetup."Column Layout Name 1");
+
+                               {
+                               IF NOT ChineseReportSetup.GET(AccountScheduleName) THEN
+                                  ERROR(Text50000);
+                               TempColum.SETRANGE("Column Layout Name",'CHSREPORT');
+                               }
+                               AccountScheduleName:=LocalizationPackageSetup."Account Schedule Name 1";
+
+                               //<<#5 Tectura
+
+                               AccLine1.COPYFILTERS("Acc. Schedule Line");
+                               AccLine1.SETRANGE("Schedule Name",AccountScheduleName);
+                               AccLine1.SETRANGE(Show,AccLine1.Show::Yes);
+                               AccLine1.SETRANGE("Line No.",ChineseReportSetup."Left Starting Line",ChineseReportSetup."Left Ending Line");
+
+                               AccLine2.COPYFILTERS("Acc. Schedule Line");
+                               AccLine2.SETRANGE("Schedule Name",AccountScheduleName);
+                               AccLine2.SETRANGE(Show,AccLine2.Show::Yes);
+                               AccLine2.SETRANGE("Line No.",ChineseReportSetup."Right Starting Line",ChineseReportSetup."Right Ending Line");
+
+                               LeftRaws := AccLine1.COUNT;
+                               RightRaws := AccLine2.COUNT;
+                               IF RightRaws > LeftRaws THEN
+                                  Integer.SETRANGE(Number,1,RightRaws)
+                               ELSE
+                                  Integer.SETRANGE(Number,1,LeftRaws);
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  IF Number = 1 THEN BEGIN
+                                     AccLine1.FIND('-');
+                                     AccLine2.FIND('-');
+                                  END ELSE BEGIN
+                                     IF Number <= LeftRaws THEN
+                                        AccLine1.NEXT;
+                                     IF Number <= RightRaws THEN
+                                        AccLine2.NEXT;
+                                  END;
+                                  //Get Left Side
+                                  IF (Number <= LeftRaws) AND (AccLine1.Show = AccLine1.Show::Yes)  THEN BEGIN
+                                     IF "Use Description 2" THEN
+                                        vDescription := AccLine1."Description 2"
+                                     ELSE
+                                        vDescription := AccLine1.Description;
+                                     vRaw := AccLine1."Row No.";
+                                     CASE AccLine1."Row Type" OF
+                                        AccLine1."Row Type"::"Balance at Date":
+                                           TempColum.SETRANGE("Column No.",'YEARTODATE');
+                                        AccLine1."Row Type"::"Beginning Balance":
+                                           TempColum.SETRANGE("Column No.",'YEARBEGIN');
+                                        AccLine1."Row Type"::"Net Change":
+                                           TempColum.SETRANGE("Column No.",'MONTHCHANG');
+                                     END;
+                                     //TempColum.INIT;
+                                     //IF TempColum."Line No." <> AccLine1."Amount Calculation" THEN BEGIN
+                                     //   TempColum.SETRANGE("Line No.",AccLine1."Amount Calculation");
+                                        IF TempColum.FIND('-') THEN;
+                                     //END;
+
+                                     IF Type = Type::B THEN  //Indirect type
+                                        ColAmount := AccSchMgt.CalcCell(AccLine1,TempColum,FALSE);
+
+                                     IF Type = Type::A THEN  //Direct type
+                                        ColAmount := AccSchMgt.CalcCellCHSCash(AccLine1,TempColum,CashFlowDimCode,FALSE);
+
+                                  END ELSE BEGIN
+                                     vDescription := '';
+                                     vRaw := '';
+                                     ColAmount := 0;
+                                  END;
+                                  //Get Right Side
+                                  IF (Number <= RightRaws) AND (AccLine2.Show = AccLine2.Show::Yes) THEN BEGIN
+                                     IF "Use Description 2" THEN
+                                        vDescription2 := AccLine2."Description 2"
+                                     ELSE
+                                        vDescription2 := AccLine2.Description;
+                                     vRaw2 := AccLine2."Row No.";
+                                     CASE AccLine2."Row Type" OF
+                                        AccLine2."Row Type"::"Balance at Date":
+                                           TempColum.SETRANGE("Column No.",'YEARTODATE');
+                                        AccLine2."Row Type"::"Beginning Balance":
+                                           TempColum.SETRANGE("Column No.",'YEARBEGIN');
+                                        AccLine2."Row Type"::"Net Change":
+                                           TempColum.SETRANGE("Column No.",'MONTHCHANG');
+                                     END;
+
+                                     //TempColum.INIT;
+                                     //IF TempColum."Line No." <> AccLine2."Amount Calculation" THEN BEGIN
+                                     //   TempColum.SETRANGE("Line No.",AccLine2."Amount Calculation");
+                                        IF TempColum.FIND('-') THEN;
+                                    // END;
+
+                                     IF Type = Type::B THEN
+                                        ColAmount2 := AccSchMgt.CalcCell(AccLine2,TempColum,FALSE);
+                                     IF Type = Type::A THEN
+                                        ColAmount2 := AccSchMgt.CalcCellCHSCash(AccLine2,TempColum,CashFlowDimCode,FALSE);
+
+                                  END ELSE BEGIN
+                                     vDescription2 := '';
+                                     vRaw2 := '';
+                                     ColAmount2 := 0;
+                                  END;
+                                END;
+                                 }
+
+    { 1117700021;1;Column;FORMAT_DateFilterMax_0___Year4___;
+               SourceExpr=FORMAT(DateFilterMax,0,'<Year4>') }
+
+    { 1117700022;1;Column;CompanyInfo_Name   ;
+               SourceExpr=CompanyInfo.Name }
+
+    { 1000000033;1;Column;CurrReport_PAGENO  ;
+               SourceExpr=CurrReport.PAGENO }
+
+    { 1117700009;1;Column;FORMAT_DateFilterMax_0___Year4___Month___;
+               SourceExpr=FORMAT(DateFilterMax,0,'<Year4>-<Month>') }
+
+    { 1117700010;1;Column;CompanyInfo_Name_Control1117700010;
+               SourceExpr=CompanyInfo.Name }
+
+    { 1000000005;1;Column;Period             ;
+               SourceExpr=Period }
+
+    { 1000000035;1;Column;CurrReport_PAGENO1 ;
+               SourceExpr=CurrReport.PAGENO }
+
+    { 1000000014;1;Column;CompanyInfo_Name_Control1000000014;
+               SourceExpr=CompanyInfo.Name }
+
+    { 1000000001;1;Column;FORMAT_DateFilterMax_0___Year4___Month___Day___;
+               SourceExpr=FORMAT(DateFilterMax,0,'<Year4>-<Month>-<Day>') }
+
+    { 1117700019;1;Column;FORMAT_DateFilterMin_0___Year4___Month___Day___;
+               SourceExpr=FORMAT(DateFilterMin,0,'<Year4>-<Month>-<Day>') }
+
+    { 1000000037;1;Column;CurrReport_PAGENO2 ;
+               SourceExpr=CurrReport.PAGENO }
+
+    { 1000000008;1;Column;vDescription       ;
+               SourceExpr=vDescription }
+
+    { 1000000011;1;Column;vRaw               ;
+               SourceExpr=vRaw }
+
+    { 1000000020;1;Column;ColAmount          ;
+               SourceExpr=ColAmount }
+
+    { 1000000021;1;Column;ColAmount2         ;
+               SourceExpr=ColAmount2 }
+
+    { 1000000022;1;Column;vRaw2              ;
+               SourceExpr=vRaw2 }
+
+    { 1000000023;1;Column;vDescription2      ;
+               SourceExpr=vDescription2 }
+
+    { 1117700012;1;Column;Unit_____YuanCaption;
+               SourceExpr=Unit_____YuanCaptionLbl }
+
+    { 1117700013;1;Column;Cash_Flow_StatementCaption;
+               SourceExpr=Cash_Flow_StatementCaptionLbl }
+
+    { 1117700023;1;Column;Company_Name_Caption;
+               SourceExpr=Company_Name_CaptionLbl }
+
+    { 1000000032;1;Column;CurrReport_PAGENOCaption;
+               SourceExpr=CurrReport_PAGENOCaptionLbl }
+
+    { 1117700000;1;Column;Unit_____YuanCaption_Control1117700000;
+               SourceExpr=Unit_____YuanCaption_Control1117700000Lbl }
+
+    { 1117700001;1;Column;Cash_Flow_StatementCaption_Control1117700001;
+               SourceExpr=Cash_Flow_StatementCaption_Control1117700001Lbl }
+
+    { 1117700011;1;Column;Company_Name_Caption_Control1117700011;
+               SourceExpr=Company_Name_Caption_Control1117700011Lbl }
+
+    { 1000000034;1;Column;CurrReport_PAGENOCaption1;
+               SourceExpr=CurrReport_PAGENOCaption1Lbl }
+
+    { 1000000000;1;Column;Company_Name_Caption_Control1000000000;
+               SourceExpr=Company_Name_Caption_Control1000000000Lbl }
+
+    { 1000000002;1;Column;Cash_Flow_StatementCaption_Control1000000002;
+               SourceExpr=Cash_Flow_StatementCaption_Control1000000002Lbl }
+
+    { 1000000013;1;Column;Unit_____YuanCaption_Control1000000013;
+               SourceExpr=Unit_____YuanCaption_Control1000000013Lbl }
+
+    { 1117700024;1;Column;EmptyStringCaption ;
+               SourceExpr=EmptyStringCaptionLbl }
+
+    { 1000000036;1;Column;CurrReport_PAGENOCaption2;
+               SourceExpr=CurrReport_PAGENOCaption2Lbl }
+
+    { 1000000009;1;Column;ItemCaption        ;
+               SourceExpr=ItemCaptionLbl }
+
+    { 1000000012;1;Column;No_Caption         ;
+               SourceExpr=No_CaptionLbl }
+
+    { 1000000016;1;Column;AmountCaption      ;
+               SourceExpr=AmountCaptionLbl }
+
+    { 1000000017;1;Column;No_Caption_Control1000000017;
+               SourceExpr=No_Caption_Control1000000017Lbl }
+
+    { 1000000018;1;Column;AmountCaption_Control1000000018;
+               SourceExpr=AmountCaption_Control1000000018Lbl }
+
+    { 1000000019;1;Column;ItemCaption_Control1000000019;
+               SourceExpr=ItemCaption_Control1000000019Lbl }
+
+    { 7272;1   ;Column  ;Integer_Number      ;
+               SourceExpr=Number }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+      OnInit=BEGIN
+               RecDayEnable := TRUE;
+               RecMonthEnable := TRUE;
+               RecYearEnable := TRUE;
+             END;
+
+      OnOpenPage=BEGIN
+
+                   //#1-->
+
+                   Period :=Period::Month;
+                   RecMonthEnable := FALSE;
+                   RecYearEnable := FALSE;
+                   RecDayEnable := FALSE;
+
+                   IF Period=Period::Year THEN
+                     BEGIN
+                       RecYearEnable := TRUE;
+                       RecMonthEnable := FALSE;
+                       RecDayEnable := FALSE;
+                     END;
+                   IF Period=Period::Month THEN
+                     BEGIN
+                       RecMonthEnable := TRUE;
+                       RecYearEnable := TRUE;
+                       RecDayEnable := FALSE;
+                     END;
+
+                   IF Period=Period::Day THEN
+                     BEGIN
+                       RecDayEnable := TRUE;
+                       RecMonthEnable := FALSE;
+                       RecYearEnable := FALSE;
+                     END;
+                   //#1<--
+
+
+                   //#2-->
+                   LocalizationPackageSetup.GET;
+                   CashFlowDimCode :=LocalizationPackageSetup."Cash Flow Dimension Code";
+                   //#2<--
+                 END;
+
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             CHS=选项] }
+
+      { 1117700000;2;Field  ;
+                  Name=Year;
+                  CaptionML=[ENU=Period Type;
+                             CHS=期间类型];
+                  OptionCaptionML=[ENU=Year,Month,Day;
+                                   CHS=年,月,日];
+                  SourceExpr=Period;
+                  OnValidate=BEGIN
+                               IF Period = Period::Day THEN
+                                 DayPeriodOnValidate;
+                               IF Period = Period::Month THEN
+                                 MonthPeriodOnValidate;
+                               IF Period = Period::Year THEN
+                                 YearPeriodOnValidate;
+                             END;
+                              }
+
+      { 1000000000;2;Field  ;
+                  CaptionML=[ENU=Use Description 2;
+                             CHS=使用描述2];
+                  SourceExpr="Use Description 2" }
+
+      { 1117700003;2;Field  ;
+                  Name=RecYear;
+                  CaptionML=[ENU=Year;
+                             CHS=年];
+                  SourceExpr=RecYear;
+                  Enabled=RecYearEnable;
+                  OnValidate=BEGIN
+                               //#1-->
+                               StringYear :=FORMAT(RecYear);
+
+                               PreYear :=COPYSTR(FORMAT((DATE2DMY(TODAY,3))),1,3);
+                               IF STRLEN(StringYear)>4 THEN
+                                 ERROR(Text0002);
+
+                               IF STRLEN(StringYear)=1 THEN
+                                 StringYear :=PreYear+StringYear;
+
+                               EVALUATE(RecYear,StringYear);
+
+                               IF Period=Period::Year THEN
+                                 BEGIN
+                                   BeginDay :=DMY2DATE(1,1,RecYear);
+                                   EndDay :=DMY2DATE(31,12,RecYear);
+                                   "Acc. Schedule Line".SETFILTER("Acc. Schedule Line"."Date Filter",'%1..%2',BeginDay,EndDay);
+                                   DateFilter :="Acc. Schedule Line".GETFILTER("Acc. Schedule Line"."Date Filter");
+
+                                 END;
+
+                               IF (Period=Period::Month) AND (RecMonth<>0) THEN
+                                 BEGIN
+                                   IF RecYear=0 THEN
+                                     ERROR(Text0001);
+
+                                   BeginDay :=DMY2DATE(1,RecMonth,RecYear);
+                                   CASE RecMonth OF
+                                     1:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     3:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     5:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     7:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     8:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     10:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     12:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     4:EndDay :=DMY2DATE(30,RecMonth,RecYear);
+                                     6:EndDay :=DMY2DATE(30,RecMonth,RecYear);
+                                     9:EndDay :=DMY2DATE(30,RecMonth,RecYear);
+                                     11:EndDay :=DMY2DATE(30,RecMonth,RecYear);
+                                   END;
+
+                                   IF ((RecYear MOD 4)=0) AND (RecMonth=2) THEN
+                                     EndDay :=DMY2DATE(29,RecMonth,RecYear);
+
+                                   IF ((RecYear MOD 4)<>0) AND (RecMonth=2) THEN
+                                     EndDay :=DMY2DATE(28,RecMonth,RecYear);
+
+                                   "Acc. Schedule Line".SETFILTER("Acc. Schedule Line"."Date Filter",'%1..%2',BeginDay,EndDay);
+                                   DateFilter :="Acc. Schedule Line".GETFILTER("Acc. Schedule Line"."Date Filter");
+                                 END;
+                               //#1<--
+                             END;
+                              }
+
+      { 1117700007;2;Field  ;
+                  Name=RecMonth;
+                  CaptionML=[ENU=Month;
+                             CHS=月];
+                  SourceExpr=RecMonth;
+                  Enabled=RecMonthEnable;
+                  OnValidate=BEGIN
+                               //#1-->
+                               IF Period=Period::Month THEN
+                                 BEGIN
+                                   IF RecYear=0 THEN
+                                     ERROR(Text0001);
+
+                                   BeginDay :=DMY2DATE(1,RecMonth,RecYear);
+                                   CASE RecMonth OF
+                                     1:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     3:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     5:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     7:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     8:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     10:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     12:EndDay :=DMY2DATE(31,RecMonth,RecYear);
+                                     4:EndDay :=DMY2DATE(30,RecMonth,RecYear);
+                                     6:EndDay :=DMY2DATE(30,RecMonth,RecYear);
+                                     9:EndDay :=DMY2DATE(30,RecMonth,RecYear);
+                                     11:EndDay :=DMY2DATE(30,RecMonth,RecYear);
+                                   END;
+
+                                   IF ((RecYear MOD 4)=0) AND (RecMonth=2) THEN
+                                     EndDay :=DMY2DATE(29,RecMonth,RecYear);
+
+                                   IF ((RecYear MOD 4)<>0) AND (RecMonth=2) THEN
+                                     EndDay :=DMY2DATE(28,RecMonth,RecYear);
+
+                                   "Acc. Schedule Line".SETFILTER("Acc. Schedule Line"."Date Filter",'%1..%2',BeginDay,EndDay);
+                                   DateFilter :="Acc. Schedule Line".GETFILTER("Acc. Schedule Line"."Date Filter");
+                                 END;
+                               //#1<--
+                             END;
+                              }
+
+      { 1117700005;2;Field  ;
+                  Name=RecDay;
+                  CaptionML=[ENU=Day;
+                             CHS=日];
+                  SourceExpr=DateFilter;
+                  Enabled=RecDayEnable;
+                  OnValidate=BEGIN
+                               //#1-->
+                               IF ApplicationManagement.MakeDateFilter(DateFilter) = 0 THEN;
+                               "Acc. Schedule Line".SETFILTER("Acc. Schedule Line"."Date Filter",DateFilter);
+                               //#1<--
+                             END;
+                              }
+
+      { 1000000002;2;Field  ;
+                  CaptionML=[ENU=Type;
+                             CHS=类型];
+                  OptionCaptionML=[ENU=Direct;
+                                   CHS=Direct];
+                  SourceExpr=Type;
+                  Visible=FALSE }
+
+      { 1000000007;2;Field  ;
+                  CaptionML=[ENU=Account Schedule Name;
+                             CHS=报表工具名称];
+                  SourceExpr=AccountScheduleName;
+                  Visible=FALSE;
+                  OnLookup=VAR
+                             AccScheduleName@1000000000 : Record 84;
+                           BEGIN
+                             AccScheduleName.RESET ;
+                             IF PAGE.RUNMODAL(PAGE::"Account Schedule Names",AccScheduleName) = ACTION::LookupOK THEN
+                                AccountScheduleName := AccScheduleName.Name ;
+                           END;
+                            }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      ChineseReportSetup@1000000008 : Record 84;
+      TempColum@1000000013 : Record 334;
+      AccLine1@1000000006 : Record 85;
+      AccLine2@1000000007 : Record 85;
+      ColAmount@1000000000 : Decimal;
+      ColAmount2@1000000001 : Decimal;
+      vDescription@1000000002 : Text[80];
+      vDescription2@1000000003 : Text[80];
+      vRaw@1000000004 : Code[10];
+      vRaw2@1000000005 : Code[10];
+      Text50000@1000000009 : TextConst 'ENU=Please specify Account Schedule Name in Localization Package Setup;CHS=请在本地化包设置中指定会计分析工具名称';
+      LeftRaws@1000000010 : Integer;
+      RightRaws@1000000011 : Integer;
+      AccSchMgt@1000000012 : Codeunit 8;
+      DateFilterMax@1000000014 : Date;
+      Text50010@1000000015 : TextConst 'ENU=Please Define Date Filter First!;CHS=请先定义日期过滤!';
+      "Use Description 2"@1000000016 : Boolean;
+      CompanyInfo@1000000017 : Record 79;
+      Type@1000000018 : 'A,B';
+      CashFlowDimCode@1000000019 : 'ShortCut Dimension 1,ShortCut Dimension 2,ShortCut Dimension 3,ShortCut Dimension 4';
+      CashFlowDimCodeNo@1000000020 : Integer;
+      AccountScheduleName@1000000021 : Code[10];
+      "---Tectura---"@1117700000 : Integer;
+      BeginDay@1117700001 : Date;
+      EndDay@1117700005 : Date;
+      RecYear@1117700002 : Integer;
+      RecMonth@1117700003 : ' ,1,2,3,4,5,6,7,8,9,10,11,12';
+      DateFilter@1117700004 : Text[80];
+      Period@1117700007 : 'Year,Month,Day';
+      Text0001@1117700006 : TextConst 'ENU=Please input the Year first.;CHS=请先输入年!';
+      StringYear@1117700008 : Text[30];
+      Text0002@1117700009 : TextConst 'ENU=InValid Date.;CHS=无效日期!';
+      PreYear@1117700010 : Text[30];
+      ApplicationManagement@1117700011 : Codeunit 1;
+      LocalizationPackageSetup@1117700012 : Record 52002202;
+      DateFilterMin@1117700013 : Date;
+      ColumnLayout@1117700014 : Record 333;
+      Text6000@1117700015 : TextConst 'ENU=Please specify Column Layout Name in Localization Package Setup;CHS=请在本地化包设置中指定列名称';
+      RecYearEnable@19076637 : Boolean INDATASET;
+      RecMonthEnable@19019432 : Boolean INDATASET;
+      RecDayEnable@19037755 : Boolean INDATASET;
+      Text19014658@19074767 : TextConst 'ENU=Date Filter;CHS=日期过滤';
+      Unit_____YuanCaptionLbl@1100754809 : TextConst 'ENU=Currency Code:RMB;CHS=货币单位：元';
+      Cash_Flow_StatementCaptionLbl@1142162845 : TextConst 'ENU=CashFlow Statement;CHS=现金流量表';
+      Company_Name_CaptionLbl@1126107584 : TextConst 'ENU=Company Name;CHS=编制单位';
+      CurrReport_PAGENOCaptionLbl@1000897509 : TextConst 'ENU=Page;CHS=页';
+      Unit_____YuanCaption_Control1117700000Lbl@1162913185 : TextConst 'ENU=Currency Code:RMB;CHS=货币单位：元';
+      Cash_Flow_StatementCaption_Control1117700001Lbl@1166876180 : TextConst 'ENU=Statement;CHS=现金流量表';
+      Company_Name_Caption_Control1117700011Lbl@1135986208 : TextConst 'ENU=Company Name;CHS=编制单位';
+      CurrReport_PAGENOCaption1Lbl@1000246411 : TextConst 'ENU=Page;CHS=页';
+      Company_Name_Caption_Control1000000000Lbl@1000657905 : TextConst 'ENU=Company Name;CHS=编制单位';
+      Cash_Flow_StatementCaption_Control1000000002Lbl@1000269710 : TextConst 'ENU=CashFlow Statement;CHS=现金流量表';
+      Unit_____YuanCaption_Control1000000013Lbl@1000875279 : TextConst 'ENU=Currency Code: RMB;CHS=货币单位：元';
+      EmptyStringCaptionLbl@1177551061 : TextConst 'ENU=To;CHS=至';
+      CurrReport_PAGENOCaption2Lbl@1000331411 : TextConst 'ENU=Page;CHS=页';
+      ItemCaptionLbl@1000223534 : TextConst 'ENU=Item;CHS=项目';
+      No_CaptionLbl@1000026740 : TextConst 'ENU=No;CHS=行次';
+      AmountCaptionLbl@1000029838 : TextConst 'ENU=Amount;CHS=金额';
+      No_Caption_Control1000000017Lbl@1000454315 : TextConst 'ENU=No;CHS=行次';
+      AmountCaption_Control1000000018Lbl@1000836185 : TextConst 'ENU=Amount;CHS=金额';
+      ItemCaption_Control1000000019Lbl@1000352485 : TextConst 'ENU=Item;CHS=项目';
+
+    LOCAL PROCEDURE YearPeriodOnValidate@19065033();
+    BEGIN
+      //#1-->
+      IF Period=Period::Year THEN
+        BEGIN
+          RecYearEnable := TRUE;
+          RecMonthEnable := FALSE;
+          RecDayEnable := FALSE;
+        END;
+      IF Period=Period::Month THEN
+        BEGIN
+          RecMonthEnable := TRUE;
+          RecYearEnable := TRUE;
+          RecDayEnable := FALSE;
+        END;
+
+      IF Period=Period::Day THEN
+        BEGIN
+          RecDayEnable := TRUE;
+          RecMonthEnable := FALSE;
+          RecYearEnable := FALSE;
+        END;
+      //#1<--
+    END;
+
+    LOCAL PROCEDURE MonthPeriodOnValidate@19053612();
+    BEGIN
+
+      //#1-->
+      IF Period=Period::Year THEN
+        BEGIN
+          RecYearEnable := TRUE;
+          RecMonthEnable := FALSE;
+          RecDayEnable := FALSE;
+        END;
+      IF Period=Period::Month THEN
+        BEGIN
+          RecMonthEnable := TRUE;
+          RecYearEnable := TRUE;
+          RecDayEnable := FALSE;
+        END;
+
+      IF Period=Period::Day THEN
+        BEGIN
+          RecDayEnable := TRUE;
+          RecMonthEnable := FALSE;
+          RecYearEnable := FALSE;
+        END;
+      //#1<--
+    END;
+
+    LOCAL PROCEDURE DayPeriodOnValidate@19043372();
+    BEGIN
+      //#1-->
+
+      IF Period=Period::Year THEN
+        BEGIN
+          RecYearEnable := TRUE;
+          RecMonthEnable := FALSE;
+          RecDayEnable := FALSE;
+        END;
+      IF Period=Period::Month THEN
+        BEGIN
+          RecMonthEnable := TRUE;
+          RecYearEnable := TRUE;
+          RecDayEnable := FALSE;
+        END;
+
+      IF Period=Period::Day THEN
+        BEGIN
+          RecYear :=0;
+          RecMonth :=0;
+          RecDayEnable := TRUE;
+          RecMonthEnable := FALSE;
+          RecYearEnable := FALSE;
+        END;
+      //#1<--
+    END;
+
+    BEGIN
+    {
+      #1 Tectura
+        -Select the date filter by manual in the request PAGE
+      #2 Tectura
+       -Transfer the value of cash flow dimension code to the requestion PAGE
+
+      #3 Tectura
+        -Add 3 different type header for different period
+
+      #4 Tectura
+        -Type-B by default??
+
+      #5 Tectura
+        -modified by Jerremy chen Tectura SH 20070522
+          #1: Get Account Schedule, Column Layout from Localization Package Setup
+    }
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:SecurityType>None</rd:SecurityType>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+      <Fields>
+        <Field Name="FORMAT_DateFilterMax_0___Year4___">
+          <DataField>FORMAT_DateFilterMax_0___Year4___</DataField>
+        </Field>
+        <Field Name="CompanyInfo_Name">
+          <DataField>CompanyInfo_Name</DataField>
+        </Field>
+        <Field Name="CurrReport_PAGENO">
+          <DataField>CurrReport_PAGENO</DataField>
+        </Field>
+        <Field Name="FORMAT_DateFilterMax_0___Year4___Month___">
+          <DataField>FORMAT_DateFilterMax_0___Year4___Month___</DataField>
+        </Field>
+        <Field Name="CompanyInfo_Name_Control1117700010">
+          <DataField>CompanyInfo_Name_Control1117700010</DataField>
+        </Field>
+        <Field Name="Period">
+          <DataField>Period</DataField>
+        </Field>
+        <Field Name="CurrReport_PAGENO1">
+          <DataField>CurrReport_PAGENO1</DataField>
+        </Field>
+        <Field Name="CompanyInfo_Name_Control1000000014">
+          <DataField>CompanyInfo_Name_Control1000000014</DataField>
+        </Field>
+        <Field Name="FORMAT_DateFilterMax_0___Year4___Month___Day___">
+          <DataField>FORMAT_DateFilterMax_0___Year4___Month___Day___</DataField>
+        </Field>
+        <Field Name="FORMAT_DateFilterMin_0___Year4___Month___Day___">
+          <DataField>FORMAT_DateFilterMin_0___Year4___Month___Day___</DataField>
+        </Field>
+        <Field Name="CurrReport_PAGENO2">
+          <DataField>CurrReport_PAGENO2</DataField>
+        </Field>
+        <Field Name="vDescription">
+          <DataField>vDescription</DataField>
+        </Field>
+        <Field Name="vRaw">
+          <DataField>vRaw</DataField>
+        </Field>
+        <Field Name="ColAmount">
+          <DataField>ColAmount</DataField>
+        </Field>
+        <Field Name="ColAmountFormat">
+          <DataField>ColAmountFormat</DataField>
+        </Field>
+        <Field Name="ColAmount2">
+          <DataField>ColAmount2</DataField>
+        </Field>
+        <Field Name="ColAmount2Format">
+          <DataField>ColAmount2Format</DataField>
+        </Field>
+        <Field Name="vRaw2">
+          <DataField>vRaw2</DataField>
+        </Field>
+        <Field Name="vDescription2">
+          <DataField>vDescription2</DataField>
+        </Field>
+        <Field Name="Unit_____YuanCaption">
+          <DataField>Unit_____YuanCaption</DataField>
+        </Field>
+        <Field Name="Cash_Flow_StatementCaption">
+          <DataField>Cash_Flow_StatementCaption</DataField>
+        </Field>
+        <Field Name="Company_Name_Caption">
+          <DataField>Company_Name_Caption</DataField>
+        </Field>
+        <Field Name="CurrReport_PAGENOCaption">
+          <DataField>CurrReport_PAGENOCaption</DataField>
+        </Field>
+        <Field Name="Unit_____YuanCaption_Control1117700000">
+          <DataField>Unit_____YuanCaption_Control1117700000</DataField>
+        </Field>
+        <Field Name="Cash_Flow_StatementCaption_Control1117700001">
+          <DataField>Cash_Flow_StatementCaption_Control1117700001</DataField>
+        </Field>
+        <Field Name="Company_Name_Caption_Control1117700011">
+          <DataField>Company_Name_Caption_Control1117700011</DataField>
+        </Field>
+        <Field Name="CurrReport_PAGENOCaption1">
+          <DataField>CurrReport_PAGENOCaption1</DataField>
+        </Field>
+        <Field Name="Company_Name_Caption_Control1000000000">
+          <DataField>Company_Name_Caption_Control1000000000</DataField>
+        </Field>
+        <Field Name="Cash_Flow_StatementCaption_Control1000000002">
+          <DataField>Cash_Flow_StatementCaption_Control1000000002</DataField>
+        </Field>
+        <Field Name="Unit_____YuanCaption_Control1000000013">
+          <DataField>Unit_____YuanCaption_Control1000000013</DataField>
+        </Field>
+        <Field Name="EmptyStringCaption">
+          <DataField>EmptyStringCaption</DataField>
+        </Field>
+        <Field Name="CurrReport_PAGENOCaption2">
+          <DataField>CurrReport_PAGENOCaption2</DataField>
+        </Field>
+        <Field Name="ItemCaption">
+          <DataField>ItemCaption</DataField>
+        </Field>
+        <Field Name="No_Caption">
+          <DataField>No_Caption</DataField>
+        </Field>
+        <Field Name="AmountCaption">
+          <DataField>AmountCaption</DataField>
+        </Field>
+        <Field Name="No_Caption_Control1000000017">
+          <DataField>No_Caption_Control1000000017</DataField>
+        </Field>
+        <Field Name="AmountCaption_Control1000000018">
+          <DataField>AmountCaption_Control1000000018</DataField>
+        </Field>
+        <Field Name="ItemCaption_Control1000000019">
+          <DataField>ItemCaption_Control1000000019</DataField>
+        </Field>
+        <Field Name="Integer_Number">
+          <DataField>Integer_Number</DataField>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="Table1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>9.32cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.22cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.25cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>9.32cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.22cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.25cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.1cm</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.6cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="ItemCaption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!ItemCaption.Value)</Value>
+                                  <Style>
+                                    <FontFamily>宋体</FontFamily>
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="No_Caption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!No_Caption.Value)</Value>
+                                  <Style>
+                                    <FontFamily>宋体</FontFamily>
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="AmountCaption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!AmountCaption.Value)</Value>
+                                  <Style>
+                                    <FontFamily>宋体</FontFamily>
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="ItemCaption2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!ItemCaption.Value)</Value>
+                                  <Style>
+                                    <FontFamily>宋体</FontFamily>
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="No_Caption2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!No_Caption.Value)</Value>
+                                  <Style>
+                                    <FontFamily>宋体</FontFamily>
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <RightBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="AmountCaption2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!AmountCaption.Value)</Value>
+                                  <Style>
+                                    <FontFamily>宋体</FontFamily>
+                                    <FontSize>9pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox1</rd:DefaultName>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>11</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.45cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="vDescription">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!vDescription.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="vRaw">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!vRaw.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="ColAmount">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ColAmount.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmountFormat.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="vDescription2">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!vDescription2.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="vRaw2">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!vRaw2.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <RightBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </RightBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="ColAmount2">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!ColAmount2.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cash_Flow_StatementCaption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Cash_Flow_StatementCaption.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Company_Name_Caption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Company_Name_Caption.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="CompanyInfo_Name">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!CompanyInfo_Name.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Unit_____YuanCaption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Unit_____YuanCaption.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="CurrReport_PAGENOCaption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!CurrReport_PAGENOCaption.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FORMAT_DateFilterMax_0___Year4___">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!FORMAT_DateFilterMax_0___Year4___.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FORMAT_DateFilterMax_0___Year4___Month___">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!FORMAT_DateFilterMax_0___Year4___Month___.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FORMAT_DateFilterMin_0___Year4___Month___Day___">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!FORMAT_DateFilterMin_0___Year4___Month___Day___.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FORMAT_DateFilterMax_0___Year4___Month___Day___">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!FORMAT_DateFilterMax_0___Year4___Month___Day___.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="EmptyStringCaption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!EmptyStringCaption.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Period">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Period.Value, "Table1")</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>=Fields!ColAmount2Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.075cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="Table1_Details_Group">
+                    <DataElementName>Detail</DataElementName>
+                  </Group>
+                  <TablixMembers>
+                    <TablixMember />
+                  </TablixMembers>
+                  <DataElementName>Detail_Collection</DataElementName>
+                  <DataElementOutput>Output</DataElementOutput>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet_Result</DataSetName>
+            <Height>1.05cm</Height>
+            <Width>26.68cm</Width>
+            <Style />
+          </Tablix>
+        </ReportItems>
+        <Height>1.05cm</Height>
+        <Style />
+      </Body>
+      <Width>26.80625cm</Width>
+      <Page>
+        <PageHeader>
+          <Height>2.11667cm</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <ReportItems>
+            <Textbox Name="textbox2">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!Cash_Flow_StatementCaption.Value</Value>
+                      <Style>
+                        <FontFamily>宋体</FontFamily>
+                        <FontSize>17pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>textbox2</rd:DefaultName>
+              <Left>7.56597cm</Left>
+              <Height>0.846cm</Height>
+              <Width>11.08501cm</Width>
+              <Style>
+                <BottomBorder>
+                  <Color>Black</Color>
+                  <Style>Solid</Style>
+                  <Width>1pt</Width>
+                </BottomBorder>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Line Name="line1">
+              <Top>0.95238cm</Top>
+              <Left>7.56597cm</Left>
+              <Height>0cm</Height>
+              <Width>11.08501cm</Width>
+              <ZIndex>1</ZIndex>
+              <Style>
+                <Border>
+                  <Style>Solid</Style>
+                </Border>
+              </Style>
+            </Line>
+            <Textbox Name="Company_Name_Caption1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!Company_Name_Caption.Value</Value>
+                      <Style>
+                        <FontSize>9pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.66667cm</Top>
+              <Height>0.45cm</Height>
+              <Width>4.18006cm</Width>
+              <ZIndex>2</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="CompanyInfo_Name1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!CompanyInfo_Name.Value</Value>
+                      <Style>
+                        <FontSize>9pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.66667cm</Top>
+              <Left>4.18006cm</Left>
+              <Height>0.45cm</Height>
+              <Width>8.9944cm</Width>
+              <ZIndex>3</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Unit_____YuanCaption1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!Unit_____YuanCaption.Value</Value>
+                      <Style>
+                        <FontSize>9pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.66667cm</Top>
+              <Left>19.36508cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.1746cm</Width>
+              <ZIndex>4</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="CurrReport_PAGENOCaption1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!CurrReport_PAGENOCaption.Value</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.66667cm</Top>
+              <Left>24.10053cm</Left>
+              <Height>0.45cm</Height>
+              <Width>0.95237cm</Width>
+              <ZIndex>5</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="PageNumber">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Globals!PageNumber</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.66667cm</Top>
+              <Left>25.05291cm</Left>
+              <Height>0.45cm</Height>
+              <Width>0.66138cm</Width>
+              <ZIndex>6</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="FORMAT_DateFilterMax_0___Year4___1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!FORMAT_DateFilterMax_0___Year4___.Value</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.08466cm</Top>
+              <Left>11.98413cm</Left>
+              <Height>0.45cm</Height>
+              <Width>1.5873cm</Width>
+              <ZIndex>7</ZIndex>
+              <Visibility>
+                <Hidden>=iif(ReportItems!Period.Value="Year",false,true)</Hidden>
+              </Visibility>
+              <DataElementOutput>NoOutput</DataElementOutput>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="FORMAT_DateFilterMax_0___Year4___Month___1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!FORMAT_DateFilterMax_0___Year4___Month___.Value</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                        <Format>D</Format>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.08465cm</Top>
+              <Left>11.98413cm</Left>
+              <Height>0.45cm</Height>
+              <Width>1.5873cm</Width>
+              <ZIndex>8</ZIndex>
+              <Visibility>
+                <Hidden>=iif((ReportItems!Period.Value="Month"),false,true)</Hidden>
+              </Visibility>
+              <DataElementOutput>NoOutput</DataElementOutput>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="FORMAT_DateFilterMin_0___Year4___Month___Day___1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!FORMAT_DateFilterMin_0___Year4___Month___Day___.Value</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                        <Format>D</Format>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.08466cm</Top>
+              <Left>10.71429cm</Left>
+              <Height>0.45cm</Height>
+              <Width>1.90476cm</Width>
+              <ZIndex>9</ZIndex>
+              <Visibility>
+                <Hidden>=iif(ReportItems!Period.Value="Day",false,true)</Hidden>
+              </Visibility>
+              <DataElementOutput>NoOutput</DataElementOutput>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="EmptyStringCaption1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!EmptyStringCaption.Value</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.08465cm</Top>
+              <Left>12.61905cm</Left>
+              <Height>0.45cm</Height>
+              <Width>0.63492cm</Width>
+              <ZIndex>10</ZIndex>
+              <Visibility>
+                <Hidden>=iif(ReportItems!Period.Value="Day",false,true)</Hidden>
+              </Visibility>
+              <DataElementOutput>NoOutput</DataElementOutput>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="FORMAT_DateFilterMax_0___Year4___Month___Day___1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!FORMAT_DateFilterMax_0___Year4___Month___Day___.Value</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                        <Format>D</Format>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.08466cm</Top>
+              <Left>13.25397cm</Left>
+              <Height>0.45cm</Height>
+              <Width>1.90476cm</Width>
+              <ZIndex>11</ZIndex>
+              <Visibility>
+                <Hidden>=iif(ReportItems!Period.Value="Day",false,true)</Hidden>
+              </Visibility>
+              <DataElementOutput>NoOutput</DataElementOutput>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+          </ReportItems>
+          <Style />
+        </PageHeader>
+        <PageHeight>21cm</PageHeight>
+        <PageWidth>29.7cm</PageWidth>
+        <InteractiveHeight>29.7cm</InteractiveHeight>
+        <InteractiveWidth>28.51cm</InteractiveWidth>
+        <LeftMargin>2cm</LeftMargin>
+        <RightMargin>0.01cm</RightMargin>
+        <TopMargin>1.5cm</TopMargin>
+        <BottomMargin>0.5cm</BottomMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Cm</rd:ReportUnitType>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

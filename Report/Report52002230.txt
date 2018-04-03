@@ -1,0 +1,2100 @@
+OBJECT Report 52002230 Voucher (LCY)-A5 FF
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=17:25:57;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=CHS=º«’ ∆æ÷§(LCY)-A5;
+    OnPreReport=BEGIN
+                  recGCompanyInformation.GET;
+                  recGLocalizationPackageSetup.GET;
+                END;
+
+  }
+  DATASET
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table17;
+               DataItemTableView=SORTING(Document No.,Posting Date);
+               OnAfterGetRecord=VAR
+                                  recLGLRegister@1000 : Record 45;
+                                  i@1001 : Integer;
+                                BEGIN
+                                  CLEAR(txtGPreparedName);
+                                  CLEAR(txtGDimensionValueName);
+                                  CLEAR(txtGAccountDescription);
+
+                                  //get document no.
+                                  IF txtGDocumentNo = '' THEN BEGIN
+                                    txtGDocumentNo := "Document No.";
+                                    //get register No
+                                    recLGLRegister.RESET;
+                                    recLGLRegister.SETFILTER("From Entry No.", '<=%1',"Entry No.");
+                                    recLGLRegister.SETFILTER("To Entry No.", '>=%1',"Entry No.");
+                                    IF recLGLRegister.FINDFIRST THEN BEGIN
+                                      intGRegisterNo := recLGLRegister."No.";
+                                    END;
+                                  END ELSE BEGIN
+                                    IF txtGDocumentNo <> "Document No." THEN BEGIN
+                                      //get register No
+                                      recLGLRegister.RESET;
+                                      recLGLRegister.SETFILTER("From Entry No.", '<=%1',"Entry No.");
+                                      recLGLRegister.SETFILTER("To Entry No.", '>=%1',"Entry No.");
+                                      IF recLGLRegister.FINDFIRST THEN BEGIN
+                                        intGRegisterNo := recLGLRegister."No.";
+                                      END;
+                                    END;
+                                  END;
+
+                                  txtGDocumentNo := "Document No.";
+
+                                  recGUser.RESET;
+                                  recGUser.SETRANGE("User Name",Prepared);
+                                  IF recGUser.FINDFIRST THEN BEGIN
+                                    txtGPreparedName := recGUser."Full Name";
+                                  END;
+
+                                  recGUser.SETRANGE("User Name","User ID");
+                                  IF recGUser.FINDFIRST THEN BEGIN
+                                    txtGCheckedName := recGUser."Full Name";
+                                  END;
+
+
+                                  CASE recGLocalizationPackageSetup."Voucher Description" OF
+                                    recGLocalizationPackageSetup."Voucher Description"::"Entry Description":
+                                      BEGIN
+                                        txtGAccountDescription := Description;
+                                      END;
+
+                                    recGLocalizationPackageSetup."Voucher Description"::"Cascade Account Name":
+                                      BEGIN
+                                        IF recGLocalizationPackageSetup."Use Account Description 2" THEN BEGIN
+                                          txtGAccountDescription := ShowCascadeDescription("G/L Account No.",TRUE);
+                                        END ELSE BEGIN
+                                          txtGAccountDescription := ShowCascadeDescription("G/L Account No.",FALSE);
+                                        END;
+                                      END;
+
+                                    recGLocalizationPackageSetup."Voucher Description"::"Entry Desc+Cascade Acct. Name":
+                                      BEGIN
+                                        IF recGLocalizationPackageSetup."Use Account Description 2" THEN BEGIN
+                                          txtGAccountDescription := Description+'-' + ShowCascadeDescription("G/L Account No.",TRUE);
+                                        END ELSE BEGIN
+                                          txtGAccountDescription := Description+'-'+ShowCascadeDescription("G/L Account No.",FALSE);
+                                        END;
+                                      END;
+
+                                    recGLocalizationPackageSetup."Voucher Description"::"Cascade Acct. Name+Entry Desc":
+                                      BEGIN
+                                        IF recGLocalizationPackageSetup."Use Account Description 2" THEN BEGIN
+                                          txtGAccountDescription := ShowCascadeDescription("G/L Account No.",TRUE) +'-'+ Description;
+                                        END ELSE BEGIN
+                                          txtGAccountDescription :=ShowCascadeDescription("G/L Account No.",FALSE) +'-'+ Description;
+                                        END;
+                                      END;
+                                  END;
+
+                                  IF recGLocalizationPackageSetup."Dimension Print Code 1" <> '' THEN BEGIN
+                                    IF recGDimensionSetEntry.GET("Dimension Set ID",recGLocalizationPackageSetup."Dimension Print Code 1") THEN BEGIN
+                                      IF recGDimensionValue.GET(recGLocalizationPackageSetup."Dimension Print Code 1",recGDimensionSetEntry."Dimension Value Code") THEN BEGIN
+                                        txtGDimensionValueName[1] := recGDimensionValue.Name;
+                                      END;
+                                    END;
+                                  END;
+
+                                  IF recGLocalizationPackageSetup."Dimension Print Code 2" <> '' THEN BEGIN
+                                    IF recGDimensionSetEntry.GET("Dimension Set ID",recGLocalizationPackageSetup."Dimension Print Code 2") THEN BEGIN
+                                      IF recGDimensionValue.GET(recGLocalizationPackageSetup."Dimension Print Code 2",recGDimensionSetEntry."Dimension Value Code") THEN BEGIN
+                                        txtGDimensionValueName[2] := recGDimensionValue.Name;
+                                      END;
+                                    END;
+                                  END;
+
+                                  IF recGLocalizationPackageSetup."Dimension Print Code 3" <> '' THEN BEGIN
+                                    IF recGDimensionSetEntry.GET("Dimension Set ID",recGLocalizationPackageSetup."Dimension Print Code 3") THEN BEGIN
+                                      IF recGDimensionValue.GET(recGLocalizationPackageSetup."Dimension Print Code 3",recGDimensionSetEntry."Dimension Value Code") THEN BEGIN
+                                        txtGDimensionValueName[3] := recGDimensionValue.Name;
+                                      END;
+                                    END;
+                                  END;
+
+                                  IF recGLocalizationPackageSetup."Dimension Print Code 4" <> '' THEN BEGIN
+                                    IF recGDimensionSetEntry.GET("Dimension Set ID",recGLocalizationPackageSetup."Dimension Print Code 4") THEN BEGIN
+                                      IF recGDimensionValue.GET(recGLocalizationPackageSetup."Dimension Print Code 4",recGDimensionSetEntry."Dimension Value Code") THEN BEGIN
+                                        txtGDimensionValueName[4] := recGDimensionValue.Name;
+                                      END;
+                                    END;
+                                  END;
+
+                                  txtGAccountNameLine1 := GetAccountName("G/L Account No.");
+                                  txtGAccountNameLine2 :=GetAccountNo("G/L Account No.");
+                                  FOR i := 1 TO ARRAYLEN(txtGDimensionValueName) DO BEGIN
+                                    IF txtGDimensionValueName[i] <> '' THEN BEGIN
+                                      txtGAccountNameLine2 := txtGAccountNameLine2 + '  ' + txtGDimensionValueName[i];
+                                    END;
+                                  END;
+                                END;
+
+               ReqFilterFields=Document No.,Posting Date }
+
+    { 8   ;1   ;Column  ;GLEntryDocumentNo   ;
+               SourceExpr="Document No." }
+
+    { 9   ;1   ;Column  ;GLEntryPostingDate  ;
+               SourceExpr="Posting Date" }
+
+    { 19  ;1   ;Column  ;intGRegisterNo      ;
+               SourceExpr=intGRegisterNo }
+
+    { 28  ;1   ;Column  ;txtGPrepareName     ;
+               SourceExpr=txtGPreparedName }
+
+    { 29  ;1   ;Column  ;txtGCheckedName     ;
+               SourceExpr=txtGCheckedName }
+
+    { 17  ;1   ;Column  ;GLEntryVoucherNo    ;
+               SourceExpr="Voucher No." }
+
+    { 33  ;1   ;Column  ;GLEntryExternalDocumentNo;
+               SourceExpr="External Document No." }
+
+    { 30  ;1   ;Column  ;txtGAccountDescription;
+               SourceExpr=txtGAccountDescription }
+
+    { 31  ;1   ;Column  ;txtGAccountNameLine1;
+               SourceExpr=txtGAccountNameLine1 }
+
+    { 32  ;1   ;Column  ;txtGAccountNameLine2;
+               SourceExpr=txtGAccountNameLine2 }
+
+    { 10  ;1   ;Column  ;GLEntryDebitAmount  ;
+               SourceExpr="Debit Amount" }
+
+    { 11  ;1   ;Column  ;GLEntryCreditAmount ;
+               SourceExpr="Credit Amount" }
+
+    { 22  ;1   ;Column  ;GLEntryAttachment   ;
+               SourceExpr=Attachment }
+
+    { 2   ;    ;DataItem;ReportFixedValue    ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number)
+                                 ORDER(Ascending)
+                                 WHERE(Number=CONST(1)) }
+
+    { 3   ;1   ;Column  ;txt50000            ;
+               SourceExpr=txt50000 }
+
+    { 4   ;1   ;Column  ;txt50001            ;
+               SourceExpr=txt50001 }
+
+    { 5   ;1   ;Column  ;txt50002            ;
+               SourceExpr=txt50002 }
+
+    { 6   ;1   ;Column  ;txt50003            ;
+               SourceExpr=txt50003 }
+
+    { 7   ;1   ;Column  ;txt50004            ;
+               SourceExpr=txt50004 }
+
+    { 12  ;1   ;Column  ;txt50005            ;
+               SourceExpr=txt50005 }
+
+    { 13  ;1   ;Column  ;txt50006            ;
+               SourceExpr=txt50006 }
+
+    { 14  ;1   ;Column  ;recGCompanyInformationName;
+               SourceExpr=recGCompanyInformation.Name }
+
+    { 15  ;1   ;Column  ;txt50007            ;
+               SourceExpr=txt50007 }
+
+    { 16  ;1   ;Column  ;GLEntryFIELDCAPTIONDocumentNo;
+               SourceExpr="G/L Entry".FIELDCAPTION("Document No.") }
+
+    { 34  ;1   ;Column  ;GLEntryFIELDCAPTIONExternalDocumentNo;
+               SourceExpr="G/L Entry".FIELDCAPTION("External Document No.") }
+
+    { 18  ;1   ;Column  ;txt50008            ;
+               SourceExpr=txt50008 }
+
+    { 20  ;1   ;Column  ;txt50009            ;
+               SourceExpr=txt50009 }
+
+    { 21  ;1   ;Column  ;txt50010            ;
+               SourceExpr=txt50010 }
+
+    { 23  ;1   ;Column  ;txt50011            ;
+               SourceExpr=txt50011 }
+
+    { 24  ;1   ;Column  ;txt50012            ;
+               SourceExpr=txt50012 }
+
+    { 27  ;1   ;Column  ;recGLocalizationPackageSetupManager;
+               SourceExpr=recGLocalizationPackageSetup.Manager }
+
+    { 25  ;1   ;Column  ;txt50013            ;
+               SourceExpr=txt50013 }
+
+    { 26  ;1   ;Column  ;txt50014            ;
+               SourceExpr=txt50014 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      txt50000@1000 : TextConst 'ENU=Description';
+      txt50001@1001 : TextConst 'ENU=Account';
+      txt50002@1002 : TextConst 'ENU=Amount';
+      txt50003@1004 : TextConst 'ENU=Debit';
+      txt50004@1003 : TextConst 'ENU=Credit';
+      txt50005@1005 : TextConst 'ENU=Voucher';
+      recGCompanyInformation@1006 : Record 79;
+      txt50006@1007 : TextConst 'ENU=Company';
+      txt50007@1008 : TextConst 'ENU=Voucher No.';
+      txt50008@1009 : TextConst 'ENU=Reg. No.';
+      intGRegisterNo@1010 : Integer;
+      txtGDocumentNo@1011 : Text;
+      txt50009@1012 : TextConst 'ENU=Page No.';
+      txt50010@1013 : TextConst 'ENU=Attachment';
+      txt50011@1014 : TextConst 'ENU=Total';
+      txt50012@1015 : TextConst 'ENU=Manager';
+      txt50013@1016 : TextConst 'ENU=Checked';
+      txt50014@1017 : TextConst 'ENU=Prepared';
+      recGLocalizationPackageSetup@1018 : Record 52002202;
+      recGUser@1019 : Record 2000000120;
+      txtGPreparedName@1020 : Text;
+      txtGCheckedName@1021 : Text;
+      recGDimensionSetEntry@1022 : Record 480;
+      txtGDimensionValueName@1023 : ARRAY [10] OF Text;
+      recGDimensionValue@1024 : Record 349;
+      txtGAccountDescription@1025 : Text;
+      txtGAccountNameLine1@1026 : Text;
+      txtGAccountNameLine2@1027 : Text;
+
+    PROCEDURE ShowCascadeDescription@1000000007(txtPGLAccountNo@1000 : Text;blnPShowDescription2@1001 : Boolean) txtLReturn : Text;
+    VAR
+      recLGLAccount@1002 : Record 15;
+      recxLGLAccount@1005 : Record 15;
+      blnLTopLevel@1003 : Boolean;
+      intLIndentationLevel@1004 : Integer;
+      blnLBreak@1006 : Boolean;
+    BEGIN
+      txtLReturn := '';
+
+      recLGLAccount.GET(txtPGLAccountNo);
+
+      IF recLGLAccount.Indentation <> 0 THEN BEGIN
+        IF blnPShowDescription2 = TRUE THEN BEGIN
+          txtLReturn := recLGLAccount."Description CHS";
+        END ELSE BEGIN
+          txtLReturn := recLGLAccount.Name;
+        END;
+        blnLBreak := FALSE;
+        intLIndentationLevel := recLGLAccount.Indentation;
+        REPEAT
+          recxLGLAccount.RESET;
+          IF recLGLAccount.NEXT(-1) = 0 THEN BEGIN
+            blnLBreak := TRUE;
+          END ELSE BEGIN
+            IF intLIndentationLevel = recLGLAccount.Indentation  + 1 THEN BEGIN
+              IF blnPShowDescription2 = TRUE THEN BEGIN
+                txtLReturn := recLGLAccount."Description CHS" + '-' + txtLReturn;
+              END ELSE BEGIN
+                txtLReturn := recLGLAccount.Name + '-' + txtLReturn;
+              END;
+              intLIndentationLevel := recLGLAccount.Indentation;
+            END;
+          END;
+        UNTIL (recLGLAccount.Indentation = 0) OR (blnLBreak = TRUE);
+      END ELSE BEGIN //top level
+        IF blnPShowDescription2 = TRUE THEN BEGIN
+          txtLReturn := recLGLAccount."Description CHS";
+        END ELSE BEGIN
+          txtLReturn := recLGLAccount.Name;
+        END;
+      END;
+    END;
+
+    PROCEDURE GetAccountName@1000000000(txtPAccountNo@1000000000 : Text) : Text[100];
+    VAR
+      recLGLAccount@1000000001 : Record 15;
+      recLLocalizationPackageSetup@1000 : Record 52002202;
+    BEGIN
+      recLLocalizationPackageSetup.GET;
+      IF txtPAccountNo <>'' THEN BEGIN
+        recLGLAccount.GET(txtPAccountNo);
+         IF recLLocalizationPackageSetup."Use Account Description 2" THEN
+           EXIT(recLGLAccount."Description CHS");
+         EXIT(recLGLAccount.Name);
+      END;
+    END;
+
+    PROCEDURE GetAccountNo@1117700001(txtPAccountNo@1002 : Text) : Text[100];
+    VAR
+      recLGLAccount@1001 : Record 15;
+      recLLocalizationPackageSetup@1000 : Record 52002202;
+    BEGIN
+      recLLocalizationPackageSetup.GET;
+      IF txtPAccountNo <>'' THEN BEGIN
+        recLGLAccount.GET(txtPAccountNo);
+         IF recLLocalizationPackageSetup."Use Account No. 2" THEN
+           EXIT(recLGLAccount."No. CHS");
+         EXIT(recLGLAccount."No.");
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:SecurityType>None</rd:SecurityType>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+      <Fields>
+        <Field Name="GLEntryDocumentNo">
+          <DataField>GLEntryDocumentNo</DataField>
+        </Field>
+        <Field Name="GLEntryPostingDate">
+          <DataField>GLEntryPostingDate</DataField>
+        </Field>
+        <Field Name="intGRegisterNo">
+          <DataField>intGRegisterNo</DataField>
+        </Field>
+        <Field Name="txtGPrepareName">
+          <DataField>txtGPrepareName</DataField>
+        </Field>
+        <Field Name="txtGCheckedName">
+          <DataField>txtGCheckedName</DataField>
+        </Field>
+        <Field Name="GLEntryVoucherNo">
+          <DataField>GLEntryVoucherNo</DataField>
+        </Field>
+        <Field Name="GLEntryExternalDocumentNo">
+          <DataField>GLEntryExternalDocumentNo</DataField>
+        </Field>
+        <Field Name="txtGAccountDescription">
+          <DataField>txtGAccountDescription</DataField>
+        </Field>
+        <Field Name="txtGAccountNameLine1">
+          <DataField>txtGAccountNameLine1</DataField>
+        </Field>
+        <Field Name="txtGAccountNameLine2">
+          <DataField>txtGAccountNameLine2</DataField>
+        </Field>
+        <Field Name="GLEntryDebitAmount">
+          <DataField>GLEntryDebitAmount</DataField>
+        </Field>
+        <Field Name="GLEntryDebitAmountFormat">
+          <DataField>GLEntryDebitAmountFormat</DataField>
+        </Field>
+        <Field Name="GLEntryCreditAmount">
+          <DataField>GLEntryCreditAmount</DataField>
+        </Field>
+        <Field Name="GLEntryCreditAmountFormat">
+          <DataField>GLEntryCreditAmountFormat</DataField>
+        </Field>
+        <Field Name="GLEntryAttachment">
+          <DataField>GLEntryAttachment</DataField>
+        </Field>
+        <Field Name="txt50000">
+          <DataField>txt50000</DataField>
+        </Field>
+        <Field Name="txt50001">
+          <DataField>txt50001</DataField>
+        </Field>
+        <Field Name="txt50002">
+          <DataField>txt50002</DataField>
+        </Field>
+        <Field Name="txt50003">
+          <DataField>txt50003</DataField>
+        </Field>
+        <Field Name="txt50004">
+          <DataField>txt50004</DataField>
+        </Field>
+        <Field Name="txt50005">
+          <DataField>txt50005</DataField>
+        </Field>
+        <Field Name="txt50006">
+          <DataField>txt50006</DataField>
+        </Field>
+        <Field Name="recGCompanyInformationName">
+          <DataField>recGCompanyInformationName</DataField>
+        </Field>
+        <Field Name="txt50007">
+          <DataField>txt50007</DataField>
+        </Field>
+        <Field Name="GLEntryFIELDCAPTIONDocumentNo">
+          <DataField>GLEntryFIELDCAPTIONDocumentNo</DataField>
+        </Field>
+        <Field Name="GLEntryFIELDCAPTIONExternalDocumentNo">
+          <DataField>GLEntryFIELDCAPTIONExternalDocumentNo</DataField>
+        </Field>
+        <Field Name="txt50008">
+          <DataField>txt50008</DataField>
+        </Field>
+        <Field Name="txt50009">
+          <DataField>txt50009</DataField>
+        </Field>
+        <Field Name="txt50010">
+          <DataField>txt50010</DataField>
+        </Field>
+        <Field Name="txt50011">
+          <DataField>txt50011</DataField>
+        </Field>
+        <Field Name="txt50012">
+          <DataField>txt50012</DataField>
+        </Field>
+        <Field Name="recGLocalizationPackageSetupManager">
+          <DataField>recGLocalizationPackageSetupManager</DataField>
+        </Field>
+        <Field Name="txt50013">
+          <DataField>txt50013</DataField>
+        </Field>
+        <Field Name="txt50014">
+          <DataField>txt50014</DataField>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="Tablix3">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>2.29167in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.625in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.32407in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.10417in</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.03125in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox7">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value EvaluationMode="Constant" />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox7</rd:DefaultName>
+                          <Visibility>
+                            <Hidden>=Code.SETDATA(
+CSTR(FORMAT(Fields!GLEntryPostingDate.Value)) + Chr(177) + 
+CSTR(Fields!GLEntryVoucherNo.Value) + Chr(177) + 
+CSTR(Fields!GLEntryDocumentNo.Value) + Chr(177) + 
+Cstr(Fields!intGRegisterNo.Value) + Chr(177) + 
+Cstr(Fields!GLEntryAttachment.Value) + Chr(177) + 
+Cstr(Fields!GLEntryExternalDocumentNo.Value) + Chr(177)
+,1)</Hidden>
+                          </Visibility>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox8">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox8</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox9">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox9</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox10">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox10</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.3937in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="txt50000">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Last(Fields!txt50000.Value, "DataSet_Result")</Value>
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>txt50000</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="txt50001">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Last(Fields!txt50001.Value, "DataSet_Result")</Value>
+                                  <Style>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>txt50001</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="Rectangle1">
+                          <ReportItems>
+                            <Textbox Name="Textbox37">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Last(Fields!txt50002.Value, "DataSet_Result")</Value>
+                                      <Style>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox37</rd:DefaultName>
+                              <Left>0.00001cm</Left>
+                              <Height>0.5cm</Height>
+                              <Width>6.16771cm</Width>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <TopBorder>
+                                  <Style>Solid</Style>
+                                </TopBorder>
+                                <LeftBorder>
+                                  <Style>None</Style>
+                                </LeftBorder>
+                                <RightBorder>
+                                  <Style>Solid</Style>
+                                </RightBorder>
+                                <VerticalAlign>Middle</VerticalAlign>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Textbox38">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Last(Fields!txt50003.Value, "DataSet_Result")</Value>
+                                      <Style>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox38</rd:DefaultName>
+                              <Top>0.5cm</Top>
+                              <Left>0.00001cm</Left>
+                              <Height>0.5cm</Height>
+                              <Width>3.36312cm</Width>
+                              <ZIndex>1</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <TopBorder>
+                                  <Style>Solid</Style>
+                                </TopBorder>
+                                <BottomBorder>
+                                  <Style>Solid</Style>
+                                </BottomBorder>
+                                <RightBorder>
+                                  <Style>Solid</Style>
+                                </RightBorder>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Textbox39">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Last(Fields!txt50004.Value, "DataSet_Result")</Value>
+                                      <Style>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox38</rd:DefaultName>
+                              <Top>0.5cm</Top>
+                              <Left>3.36313cm</Left>
+                              <Height>0.5cm</Height>
+                              <Width>2.80459cm</Width>
+                              <ZIndex>2</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <TopBorder>
+                                  <Style>Solid</Style>
+                                </TopBorder>
+                                <BottomBorder>
+                                  <Style>Solid</Style>
+                                </BottomBorder>
+                                <LeftBorder>
+                                  <Style>Solid</Style>
+                                </LeftBorder>
+                                <RightBorder>
+                                  <Style>Solid</Style>
+                                </RightBorder>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <KeepTogether>true</KeepTogether>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                          </Style>
+                        </Rectangle>
+                        <ColSpan>2</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.3937in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox23">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!txtGAccountDescription.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox23</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox25">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!txtGAccountNameLine1.Value + vbcrlf + Fields!txtGAccountNameLine2.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox25</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="GLEntryDebitAmount">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.BlankZero(Fields!GLEntryDebitAmount.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!GLEntryDebitAmountFormat.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>GLEntryDebitAmount</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="GLEntryCreditAmount">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.BlankZero(Fields!GLEntryCreditAmount.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!GLEntryCreditAmountFormat.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>GLEntryCreditAmount</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.23622in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox5">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Last(Fields!txt50011.Value, "DataSet_Result")</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox5</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>Solid</Style>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox6">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox6</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>Solid</Style>
+                            </LeftBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox13">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.BlankZero(SUM(Fields!GLEntryDebitAmount.Value))</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!GLEntryDebitAmountFormat.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox13</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>Solid</Style>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox14">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.BlankZero(SUM(Fields!GLEntryCreditAmount.Value))</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!GLEntryCreditAmountFormat.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox14</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>Solid</Style>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>Solid</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>Solid</Style>
+                            </RightBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.2753in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="Rectangle2">
+                          <ReportItems>
+                            <Textbox Name="Textbox4">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Last(Fields!txt50012.Value, "DataSet_Result")</Value>
+                                      <Style>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox4</rd:DefaultName>
+                              <Height>0.6cm</Height>
+                              <Width>2.5cm</Width>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Textbox15">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Last(Fields!recGLocalizationPackageSetupManager.Value, "DataSet_Result")</Value>
+                                      <Style>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox4</rd:DefaultName>
+                              <Left>2.5cm</Left>
+                              <Height>0.6cm</Height>
+                              <Width>3.32084cm</Width>
+                              <ZIndex>1</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <KeepTogether>true</KeepTogether>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                          </Style>
+                        </Rectangle>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="Rectangle3">
+                          <ReportItems>
+                            <Textbox Name="Textbox11">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Last(Fields!txt50013.Value, "DataSet_Result")</Value>
+                                      <Style>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox4</rd:DefaultName>
+                              <Height>0.6cm</Height>
+                              <Width>2.5cm</Width>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Textbox16">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!txtGCheckedName.Value</Value>
+                                      <Style>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox4</rd:DefaultName>
+                              <Left>2.5cm</Left>
+                              <Height>0.6cm</Height>
+                              <Width>4.1675cm</Width>
+                              <ZIndex>1</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <KeepTogether>true</KeepTogether>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                          </Style>
+                        </Rectangle>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="Rectangle4">
+                          <ReportItems>
+                            <Textbox Name="Textbox17">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!txtGPrepareName.Value</Value>
+                                      <Style>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox4</rd:DefaultName>
+                              <Left>2.5cm</Left>
+                              <Height>0.6cm</Height>
+                              <Width>3.66772cm</Width>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Textbox12">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Last(Fields!txt50014.Value, "DataSet_Result")</Value>
+                                      <Style>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox4</rd:DefaultName>
+                              <Height>0.6cm</Height>
+                              <Width>2.5cm</Width>
+                              <ZIndex>1</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <KeepTogether>true</KeepTogether>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                          </Style>
+                        </Rectangle>
+                        <ColSpan>2</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <Group Name="EveryGroup">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!GLEntryDocumentNo.Value</GroupExpression>
+                      <GroupExpression>=Fields!GLEntryPostingDate.Value</GroupExpression>
+                      <GroupExpression>=Fields!intGRegisterNo.Value</GroupExpression>
+                    </GroupExpressions>
+                    <PageBreak>
+                      <BreakLocation>Between</BreakLocation>
+                      <ResetPageNumber>true</ResetPageNumber>
+                    </PageBreak>
+                    <Filters>
+                      <Filter>
+                        <FilterExpression>=Fields!txt50000.Value</FilterExpression>
+                        <Operator>LessThan</Operator>
+                        <FilterValues>
+                          <FilterValue>""</FilterValue>
+                        </FilterValues>
+                      </Filter>
+                    </Filters>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!GLEntryDocumentNo.Value</Value>
+                    </SortExpression>
+                    <SortExpression>
+                      <Value>=Fields!GLEntryPostingDate.Value</Value>
+                    </SortExpression>
+                    <SortExpression>
+                      <Value>=Fields!intGRegisterNo.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <TablixMembers>
+                    <TablixMember>
+                      <KeepWithGroup>After</KeepWithGroup>
+                      <RepeatOnNewPage>true</RepeatOnNewPage>
+                    </TablixMember>
+                    <TablixMember>
+                      <KeepWithGroup>After</KeepWithGroup>
+                      <RepeatOnNewPage>true</RepeatOnNewPage>
+                    </TablixMember>
+                    <TablixMember>
+                      <Group Name="Details" />
+                    </TablixMember>
+                    <TablixMember>
+                      <KeepWithGroup>Before</KeepWithGroup>
+                    </TablixMember>
+                    <TablixMember>
+                      <KeepWithGroup>Before</KeepWithGroup>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet_Result</DataSetName>
+            <Top>0.01389in</Top>
+            <Left>0.03528cm</Left>
+            <Height>1.33017in</Height>
+            <Width>7.34491in</Width>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Tablix>
+        </ReportItems>
+        <Height>3.41391cm</Height>
+        <Style />
+      </Body>
+      <Width>18.69134cm</Width>
+      <Page>
+        <PageHeader>
+          <Height>4.5773cm</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <ReportItems>
+            <Textbox Name="Textbox1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Last(Fields!txt50005.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>17pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox1</rd:DefaultName>
+              <Left>0.03528cm</Left>
+              <Height>0.6cm</Height>
+              <Width>18.65605cm</Width>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox2">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value />
+                      <Style />
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox2</rd:DefaultName>
+              <Top>0.63528cm</Top>
+              <Left>7.54627cm</Left>
+              <Height>0.1cm</Height>
+              <Width>3.83646cm</Width>
+              <ZIndex>1</ZIndex>
+              <Style>
+                <Border>
+                  <Style>Solid</Style>
+                </Border>
+                <LeftBorder>
+                  <Style>None</Style>
+                </LeftBorder>
+                <RightBorder>
+                  <Style>None</Style>
+                </RightBorder>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox3">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=code.GETDATA(1,1)</Value>
+                      <Style />
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox3</rd:DefaultName>
+              <Top>0.77056cm</Top>
+              <Left>7.54627cm</Left>
+              <Height>0.6cm</Height>
+              <Width>3.83646cm</Width>
+              <ZIndex>2</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption3">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Last(Fields!txt50007.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>0.77639cm</Top>
+              <Left>12.17966cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.36314cm</Width>
+              <ZIndex>3</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption4">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Last(Fields!GLEntryFIELDCAPTIONDocumentNo.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.26167cm</Top>
+              <Left>12.17966cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.36313cm</Width>
+              <ZIndex>4</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption5">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GETDATA(2,1)</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>0.77639cm</Top>
+              <Left>15.5428cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.14853cm</Width>
+              <ZIndex>5</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption6">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(3,1)</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.26167cm</Top>
+              <Left>15.54279cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.14854cm</Width>
+              <ZIndex>6</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption7">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Last(Fields!txt50008.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>2.17778cm</Top>
+              <Left>12.17968cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.36313cm</Width>
+              <ZIndex>7</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption8">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(4,1)</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>2.17778cm</Top>
+              <Left>15.5428cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.14854cm</Width>
+              <ZIndex>8</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption9">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Last(Fields!txt50009.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>2.66306cm</Top>
+              <Left>12.17968cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.36313cm</Width>
+              <ZIndex>9</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption10">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Globals!PageNumber &amp; " / " &amp; Globals!TotalPages</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>2.66306cm</Top>
+              <Left>15.57809cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.11325cm</Width>
+              <ZIndex>10</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption11">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Last(Fields!txt50010.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.11306cm</Top>
+              <Left>12.17967cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.36313cm</Width>
+              <ZIndex>11</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption12">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(5,1)</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.11306cm</Top>
+              <Left>15.54281cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.14853cm</Width>
+              <ZIndex>12</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption13">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Last(Fields!txt50006.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.64972cm</Top>
+              <Left>0.03529cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.36313cm</Width>
+              <ZIndex>13</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption14">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Last(Fields!recGCompanyInformationName.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.64972cm</Top>
+              <Left>3.39842cm</Left>
+              <Height>0.45cm</Height>
+              <Width>15.29292cm</Width>
+              <ZIndex>14</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption15">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Last(Fields!GLEntryFIELDCAPTIONExternalDocumentNo.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.72778cm</Top>
+              <Left>12.17967cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.36313cm</Width>
+              <ZIndex>15</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption16">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(6,1)</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.71167cm</Top>
+              <Left>15.54279cm</Left>
+              <Height>0.45cm</Height>
+              <Width>3.11326cm</Width>
+              <ZIndex>16</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+          </ReportItems>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </PageHeader>
+        <PageHeight>14.8cm</PageHeight>
+        <PageWidth>21cm</PageWidth>
+        <LeftMargin>1cm</LeftMargin>
+        <RightMargin>1cm</RightMargin>
+        <TopMargin>1cm</TopMargin>
+        <BottomMargin>1cm</BottomMargin>
+        <ColumnSpacing>1.27cm</ColumnSpacing>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Shared Data1 as Object
+Shared Data2 as Object
+Shared Data3 as Object
+Shared Data4 as Object
+
+Public Function GetData(Num as Integer, Group as integer) as Object
+if Group = 1 then
+   Return Cstr(Choose(Num, Split(Cstr(Data1),Chr(177))))
+End If
+
+if Group = 2 then
+   Return Cstr(Choose(Num, Split(Cstr(Data2),Chr(177))))
+End If
+
+if Group = 3 then
+   Return Cstr(Choose(Num, Split(Cstr(Data3),Chr(177))))
+End If
+
+if Group = 4 then
+   Return Cstr(Choose(Num, Split(Cstr(Data4),Chr(177))))
+End If
+End Function
+
+Public Function SetData(NewData as Object,Group as integer)
+  If Group = 1 and NewData &gt; "" Then
+      Data1 = NewData
+  End If
+
+  If Group = 2 and NewData &gt; "" Then
+      Data2 = NewData
+  End If
+
+  If Group = 3 and NewData &gt; "" Then
+      Data3 = NewData
+  End If
+
+  If Group = 4 and NewData &gt; "" Then
+      Data4 = NewData
+  End If
+
+  Return True
+End Function
+
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Cm</rd:ReportUnitType>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

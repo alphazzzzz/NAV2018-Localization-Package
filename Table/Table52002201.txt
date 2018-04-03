@@ -1,0 +1,88 @@
+OBJECT Table 52002201 GT Invoice Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=03/15/18;
+    Time=15:30:09;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=GT Invoice Line;
+               CHS=金穗发票行];
+  }
+  FIELDS
+  {
+    { 10  ;   ;SalesLine No.       ;Code20        ;CaptionML=[ENU=Item No.;
+                                                              CHS=物料编号] }
+    { 20  ;   ;Navision Doc No.    ;Code20        ;CaptionML=[ENU=Navision Doc No.;
+                                                              CHS=Naivision 票据号] }
+    { 30  ;   ;Navision Phantom No.;Code30        ;CaptionML=[ENU=Navision Phantom No.;
+                                                              CHS=Navision 虚票号] }
+    { 31  ;   ;Description         ;Text50        ;CaptionML=[ENU=Description;
+                                                              CHS=说明] }
+    { 32  ;   ;Unit of Measure     ;Text10        ;CaptionML=[ENU=Unit of Measure;
+                                                              CHS=计量单位] }
+    { 33  ;   ;Line Quantity       ;Decimal       ;CaptionML=[ENU=Line Quantity;
+                                                              CHS=行数量];
+                                                   DecimalPlaces=2:2 }
+    { 34  ;   ;Unit Price          ;Decimal       ;CaptionML=[ENU=Unit Price;
+                                                              CHS=单价];
+                                                   DecimalPlaces=2:2 }
+    { 35  ;   ;VAT%                ;Decimal       ;CaptionML=[ENU=VAT%;
+                                                              CHS=税率%];
+                                                   DecimalPlaces=2:2 }
+    { 36  ;   ;GST                 ;Code10        ;CaptionML=[ENU=GST;
+                                                              CHS=商品税务编码] }
+    { 37  ;   ;Discount Amount     ;Decimal       ;CaptionML=[ENU=Discount Amount;
+                                                              CHS=折扣金额];
+                                                   DecimalPlaces=2:2 }
+    { 38  ;   ;VAT Amount          ;Decimal       ;CaptionML=[ENU=VAT Amount;
+                                                              CHS=VAT 金额];
+                                                   DecimalPlaces=4:4 }
+    { 39  ;   ;VAT Discount Amount ;Decimal       ;CaptionML=[ENU=VAT Discount Amount;
+                                                              CHS=税额折扣金额] }
+    { 40  ;   ;Discount %          ;Decimal       ;CaptionML=[ENU=Discount %;
+                                                              CHS=折扣 %] }
+    { 50  ;   ;Amount Inc. VAT     ;Decimal       ;CaptionML=[ENU=Amount Inc. VAT;
+                                                              CHS=含税金额];
+                                                   DecimalPlaces=2:4 }
+    { 60  ;   ;Amount Exc. VAT     ;Decimal       ;CaptionML=[ENU=Amount Exc. VAT;
+                                                              CHS=不含税金额];
+                                                   DecimalPlaces=2:4 }
+    { 70  ;   ;Export DateTime     ;DateTime      ;CaptionML=[ENU=Export Datetime;
+                                                              CHS=导出日期] }
+    { 80  ;   ;Import DateTime     ;DateTime      ;CaptionML=[ENU=Import Datetime;
+                                                              CHS=导入日期] }
+    { 90  ;   ;NewLine             ;Boolean       ;CaptionML=[ENU=newLine;
+                                                              CHS=新增行] }
+    { 91  ;   ;Doc Type            ;Option        ;CaptionML=[ENU=Doc Type;
+                                                              CHS=类型];
+                                                   OptionCaptionML=[ENU=Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order;
+                                                                    CHS=报价,订单,发票,贷项通知单,总订单,退货单];
+                                                   OptionString=Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order }
+    { 92  ;   ;JinSui Invoice No   ;Code20        ;CaptionML=[ENU=JinSui Invoice No;
+                                                              CHS=金税发票编号] }
+    { 93  ;   ;Sell-to Customer No.;Code20        ;TableRelation=Customer.No.;
+                                                   CaptionML=[ENU=Sell-to Customer No.;
+                                                              CHS=售-至客户编号] }
+  }
+  KEYS
+  {
+    {    ;Navision Phantom No.                    ;Clustered=Yes }
+    {    ;Navision Doc No.,Discount %,SalesLine No.;
+                                                   SumIndexFields=Amount Inc. VAT,Amount Exc. VAT }
+    {    ;JinSui Invoice No                        }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

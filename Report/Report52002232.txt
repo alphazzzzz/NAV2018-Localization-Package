@@ -1,0 +1,3277 @@
+OBJECT Report 52002232 Voucher (Combination)-A5 F
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=12:03:19;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Voucher Combination-A5;
+               CHS=记帐凭证(合并打印)-A5];
+    OnPreReport=BEGIN
+                  gRecCompInfo.GET;
+
+                  gRecVoucher.RESET;
+                  gRecVoucher.DELETEALL;
+                  //EDD277 <<
+                  GLSetup.GET;
+                  //EDD277 >>
+                END;
+
+    OnPostReport=BEGIN
+                   //gRecVoucher.RESET;
+                   //gRecVoucher.DELETEALL;
+                 END;
+
+  }
+  DATASET
+  {
+    { 7069;    ;DataItem;G/L Entry           ;
+               DataItemTable=Table17;
+               OnPreDataItem=BEGIN
+                               Window.OPEN('Entry No.');
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  lCodShortcutDim@1117700000 : ARRAY [8] OF Code[20];
+                                BEGIN
+                                  Window.UPDATE(1,"G/L Entry"."Entry No.");
+
+                                  IF "G/L Entry".Amount = 0 THEN
+                                    CurrReport.SKIP;
+
+                                  WITH gRecVoucher DO BEGIN
+
+                                    "Voucher No." :="G/L Entry"."Voucher No.";
+                                    "Document No." := "G/L Entry"."Document No.";
+                                    "G/L Account No." := "G/L Entry"."G/L Account No.";
+
+                                    Prepared :="G/L Entry".Prepared;
+                                    fBlnCredit := ("G/L Entry"."Credit Amount" <> 0) ;
+                                    IF gOptCombine = gOptCombine::"Doc/Acc/Dim" THEN BEGIN
+                                      "Global Dimension 1 Code" := "G/L Entry"."Global Dimension 1 Code";
+                                      "Global Dimension 2 Code" := "G/L Entry"."Global Dimension 2 Code";
+                                      DimMgt.gFncShowEntryDim("G/L Entry"."Dimension Set ID",lCodShortcutDim);
+                                      fCodShortcutDim3 := lCodShortcutDim[3];
+                                      fCodShortcutDim4 := lCodShortcutDim[4];
+                                      fCodShortcutDim5 := lCodShortcutDim[5];
+                                      fCodShortcutDim6 := lCodShortcutDim[6];
+                                      fCodShortcutDim7 := lCodShortcutDim[7];
+                                      fCodShortcutDim8 := lCodShortcutDim[8];
+                                    END;
+
+                                    IF FIND THEN BEGIN
+                                      Amount += "G/L Entry".Amount;
+                                      "Debit Amount" += "G/L Entry"."Debit Amount";
+                                      "Credit Amount" += "G/L Entry"."Credit Amount";
+                                      fIntEntryCount += 1;
+                                      MODIFY;
+                                    END ELSE BEGIN
+
+                                      "Posting Date" := "G/L Entry"."Posting Date";
+                                      Description := "G/L Entry".Description;
+                                      "User ID" := "G/L Entry"."User ID";
+                                      Amount := "G/L Entry".Amount;
+                                      "Debit Amount" := "G/L Entry"."Debit Amount";
+                                      "Credit Amount" := "G/L Entry"."Credit Amount";
+
+                                      fIntEntryCount := 1;
+                                      INSERT;
+                                    END;
+
+                                  END;
+                                END;
+
+               OnPostDataItem=BEGIN
+                                Window.CLOSE;
+                              END;
+
+               ReqFilterFields=Document No.,Posting Date,Field50001 }
+
+    { 4748;    ;DataItem;                    ;
+               DataItemTable=Table52002203;
+               DataItemTableView=SORTING(Document No.,G/L Account No.,fBlnCredit,Global Dimension 1 Code,Global Dimension 2 Code,fCodShortcutDim3,fCodShortcutDim4,fCodShortcutDim5,fCodShortcutDim6,fCodShortcutDim7,fCodShortcutDim8);
+               OnPreDataItem=BEGIN
+                               //Print Fixed Line in report.
+                               IF LocalizationPackageSetup.GET THEN  BEGIN
+                                 LineCount :=LocalizationPackageSetup."Line Count -A5";
+                                 FixLine :=  LocalizationPackageSetup."Fixed Line";
+                               END;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  PreparedName :='';
+                                  CheckedName :='';
+                                  Manager :='';
+
+                                  //#1-->
+                                  //EDD277 <<
+                                  g_txtAccountName := '';
+                                  g_codAccountNo := '';
+                                  //EDD277 >>
+                                  NewPage := FALSE;
+                                  EmptyLine :=  FALSE;
+                                  NewPageCount := 0;
+
+
+                                  RecVoucher.RESET;
+                                  RecVoucher.SETRANGE(RecVoucher."Document No.","Voucher Entry"."Document No.");
+                                  TotalLine := RecVoucher.COUNT;
+
+
+                                  IF DocumentNo<>"Voucher Entry"."Document No." THEN
+                                    BEGIN
+                                      LineInt :=1;
+                                      DocumentNo :="Voucher Entry"."Document No.";
+                                    END
+                                  ELSE
+                                    LineInt :=LineInt+1;
+
+
+                                  IF (FixLine=TRUE) THEN BEGIN
+                                    IF (((LineInt-1) MOD LineCount)=0) AND (LineInt>LineCount) THEN BEGIN
+                                      CurrReport.NEWPAGE;
+                                      NewPage := TRUE;
+                                      GlobalPageCount += 1;
+                                      NewPageCount := GlobalPageCount;
+                                    END ELSE BEGIN
+                                      IF LineInt=1 THEN
+                                        GlobalPageCount :=0;
+
+                                      NewPageCount := GlobalPageCount;
+                                    END;
+                                    PageNo :=ROUND(TotalLine/LineCount,1,'>');
+                                  END;
+
+
+
+                                  //#1<--
+
+                                  //#2-->
+                                  //JC 2013-2-1 Update
+                                  RecUser.RESET;
+                                  RecUser.SETRANGE(RecUser."User Name","Voucher Entry".Prepared);
+                                  IF RecUser.FIND('-') THEN
+                                    PreparedName :=RecUser."Full Name";
+
+
+                                  IF LocalizationPackageSetup.GET THEN BEGIN
+                                      Manager :=LocalizationPackageSetup.Manager;
+                                  END;
+
+                                  RecUser.RESET;
+                                  RecUser.SETRANGE(RecUser."User Name","User ID");
+                                  IF RecUser.FIND('-') THEN
+                                    CheckedName :=RecUser."Full Name";
+
+
+                                  {IF RecUser.GET("Voucher Entry".Prepared) THEN
+                                    PreparedName
+
+                                  IF RecUser.GET("Voucher Entry"."User ID") THEN
+                                    CheckedName
+
+                                  IF LocalizationPackageSetup.GET THEN
+                                    BEGIN
+                                      IF RecUser.GET(LocalizationPackageSetup.Manager) THEN
+                                        Manager
+                                    END;    }
+                                  //#2<--
+                                  //EDD277 <<
+                                    g_txtAccountName := GetAccName("G/L Account No.");
+                                    g_codAccountNo := "G/L Entry"."G/L Account No.";
+                                  //EDD277 >>
+                                  DebitAmount := "Debit Amount";
+                                  CreditAmount := "Credit Amount";
+                                  gTXTCOMBDESCCOUNT := gTxtCombDes+' ('+FORMAT(fIntEntryCount)+')';
+                                  gtxtDimensionCombination := "Global Dimension 1 Code"+' '+"Global Dimension 2 Code"+' '+fCodShortcutDim3+' '+fCodShortcutDim4+' '+
+                                                                fCodShortcutDim5+' '+fCodShortcutDim6+' '+fCodShortcutDim7+' '+fCodShortcutDim8;
+                                END;
+                                 }
+
+    { 1117700074;1;Column;FORMAT__Posting_Date__0___Year4___Month___Day___;
+               SourceExpr=FORMAT("Posting Date",0,'<Year4>/<Month>/<Day>') }
+
+    { 1117700082;1;Column;gRecCompInfo_Name  ;
+               SourceExpr=gRecCompInfo.Name }
+
+    { 1   ;1   ;Column  ;Voucher_Entry__Voucher_Entry___Voucher_No__;
+               SourceExpr="Voucher Entry"."Voucher No." }
+
+    { 1117700085;1;Column;Voucher_Entry__Voucher_Entry___Document_No__;
+               SourceExpr="Voucher Entry"."Document No." }
+
+    { 1117700086;1;Column;gIntPage           ;
+               SourceExpr=gIntPage }
+
+    { 1117700087;1;Column;G_L_Entry__Attachment;
+               SourceExpr="G/L Entry".Attachment }
+
+    { 1117700001;1;Column;gRecCompInfo_Name_Control1117700001;
+               SourceExpr=gRecCompInfo.Name }
+
+    { 1117700004;1;Column;FORMAT__Posting_Date__0___Year4___Month___Day____Control1117700004;
+               SourceExpr=FORMAT("Posting Date",0,'<Year4>/<Month>/<Day>') }
+
+    { 1117700013;1;Column;Voucher_Entry__Voucher_Entry___Document_No___Control1117700013;
+               SourceExpr="Voucher Entry"."Document No." }
+
+    { 1117700014;1;Column;gIntPage_Control1117700014;
+               SourceExpr=gIntPage }
+
+    { 1117700061;1;Column;PageNo             ;
+               SourceExpr=PageNo }
+
+    { 1117700089;1;Column;G_L_Entry__Attachment_Control1117700089;
+               SourceExpr="G/L Entry".Attachment }
+
+    { 1000000025;1;Column;Voucher_Entry__Document_No__;
+               SourceExpr="Document No." }
+
+    { 1117700044;1;Column;gTxtCombDes______FORMAT_fIntEntryCount_____;
+               SourceExpr=gTXTCOMBDESCCOUNT }
+
+    { 1117700047;1;Column;GetAccName__G_L_Account_No___;
+               SourceExpr=g_txtAccountName }
+
+    { 1117700048;1;Column;Voucher_Entry__G_L_Account_No__;
+               SourceExpr=g_codAccountNo }
+
+    { 1117700050;1;Column;Voucher_Entry__Debit_Amount_;
+               SourceExpr=DebitAmount }
+
+    { 1117700051;1;Column;Voucher_Entry__Credit_Amount_;
+               SourceExpr=CreditAmount }
+
+    { 1117700016;1;Column;Global_Dimension_1_Code_______Global_Dimension_2_Code______fCodShortcutDim3_____fCodShortcutDim4_____fCodShortcutDim5_____fCodShortcutDim6_____fCodShortcutDim7_____fCodShortcutDim8;
+               SourceExpr=gtxtDimensionCombination }
+
+    { 1000000001;1;Column;gOptCombine____1   ;
+               SourceExpr=gOptCombine  = 1 }
+
+    { 1117700066;1;Column;Voucher_Entry__Debit_Amount__Control1117700066;
+               SourceExpr=DebitAmount }
+
+    { 1117700070;1;Column;Voucher_Entry__Credit_Amount__Control1117700070;
+               SourceExpr=CreditAmount }
+
+    { 1117700017;1;Column;PreparedName       ;
+               SourceExpr=PreparedName }
+
+    { 1117700019;1;Column;CheckedName        ;
+               SourceExpr=CheckedName }
+
+    { 1117700024;1;Column;Manager            ;
+               SourceExpr=Manager }
+
+    { 1117700075;1;Column;Voucher_CombinationCaption;
+               SourceExpr=Voucher_CombinationCaptionLbl }
+
+    { 1117700081;1;Column;Company_Name_Caption;
+               SourceExpr=Company_Name_CaptionLbl }
+
+    { 1117700083;1;Column;Voucher_No__Caption;
+               SourceExpr=Voucher_No__CaptionLbl }
+
+    { 1117700084;1;Column;Page_Caption       ;
+               SourceExpr=Page_CaptionLbl }
+
+    { 1117700088;1;Column;Attachment__Caption;
+               SourceExpr=Attachment__CaptionLbl }
+
+    { 1117700000;1;Column;Company_Name_Caption_Control1117700000;
+               SourceExpr=Company_Name_Caption_Control1117700000Lbl }
+
+    { 1117700005;1;Column;Voucher_CombinationCaption_Control1117700005;
+               SourceExpr=Voucher_CombinationCaption_Control1117700005Lbl }
+
+    { 1117700011;1;Column;Voucher_No__Caption_Control1117700011;
+               SourceExpr=Voucher_No__Caption_Control1117700011Lbl }
+
+    { 1117700012;1;Column;Page_Caption_Control1117700012;
+               SourceExpr=Page_Caption_Control1117700012Lbl }
+
+    { 1117700027;1;Column;EmptyStringCaption ;
+               SourceExpr=EmptyStringCaptionLbl }
+
+    { 1117700090;1;Column;Attachment__Caption_Control1117700090;
+               SourceExpr=Attachment__Caption_Control1117700090Lbl }
+
+    { 1117700030;1;Column;ExplanationCaption ;
+               SourceExpr=ExplanationCaptionLbl }
+
+    { 1117700035;1;Column;Gen_Leg_AccCaption ;
+               SourceExpr=Gen_Leg_AccCaptionLbl }
+
+    { 1117700041;1;Column;CreditCaption      ;
+               SourceExpr=CreditCaptionLbl }
+
+    { 1117700038;1;Column;Amount__LCY_Caption;
+               SourceExpr=Amount__LCY_CaptionLbl }
+
+    { 1117700039;1;Column;DebitCaption       ;
+               SourceExpr=DebitCaptionLbl }
+
+    { 1000000026;1;Column;Voucher_Entry__Document_No__Caption;
+               SourceExpr=FIELDCAPTION("Document No.") }
+
+    { 1117700054;1;Column;Prepared_Caption   ;
+               SourceExpr=Prepared_CaptionLbl }
+
+    { 1117700059;1;Column;Total_AmountCaption;
+               SourceExpr=Total_AmountCaptionLbl }
+
+    { 1117700064;1;Column;Checked_Caption    ;
+               SourceExpr=Checked_CaptionLbl }
+
+    { 1117700069;1;Column;Manager_Caption    ;
+               SourceExpr=Manager_CaptionLbl }
+
+    { 4259;1   ;Column  ;Voucher_Entry_fBlnCredit;
+               SourceExpr=fBlnCredit }
+
+    { 6018;1   ;Column  ;Voucher_Entry_Global_Dimension_1_Code;
+               SourceExpr="Global Dimension 1 Code" }
+
+    { 5867;1   ;Column  ;Voucher_Entry_Global_Dimension_2_Code;
+               SourceExpr="Global Dimension 2 Code" }
+
+    { 2917;1   ;Column  ;Voucher_Entry_fCodShortcutDim3;
+               SourceExpr=fCodShortcutDim3 }
+
+    { 6678;1   ;Column  ;Voucher_Entry_fCodShortcutDim4;
+               SourceExpr=fCodShortcutDim4 }
+
+    { 2695;1   ;Column  ;Voucher_Entry_fCodShortcutDim5;
+               SourceExpr=fCodShortcutDim5 }
+
+    { 7604;1   ;Column  ;Voucher_Entry_fCodShortcutDim6;
+               SourceExpr=fCodShortcutDim6 }
+
+    { 6652;1   ;Column  ;Voucher_Entry_fCodShortcutDim7;
+               SourceExpr=fCodShortcutDim7 }
+
+    { 2669;1   ;Column  ;Voucher_Entry_fCodShortcutDim8;
+               SourceExpr=fCodShortcutDim8 }
+
+    { 1000000004;1;Column;G_L_Entry_Document_No__;
+               SourceExpr="Document No." }
+
+    { 1000000003;1;Column;NewPageFlag        ;
+               SourceExpr=NewPage }
+
+    { 1000000002;1;Column;NewPageGroup       ;
+               SourceExpr=NewPageCount }
+
+    { 1000000000;1;Column;FixLine_           ;
+               SourceExpr=FixLine }
+
+    { 5444;1   ;DataItem;                    ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number)
+                                 WHERE(Number=FILTER(1..));
+               OnPreDataItem=BEGIN
+                               IF (LineInt=TotalLine) AND (FixLine=TRUE) THEN BEGIN
+                                 IF ((TotalLine MOD LineCount) <>0) THEN BEGIN
+                                   Integer.SETRANGE(Integer.Number,1,LineCount-(LineInt MOD LineCount)+1);
+                                   EmptyLine := TRUE;
+                                 END ELSE BEGIN
+                                   Integer.SETRANGE(Integer.Number,1,0);
+                                   EmptyLine := FALSE;
+                                 END;
+                               END ELSE
+                                 Integer.SETRANGE(Integer.Number,1,0);
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  IF Number = 2 THEN BEGIN
+                                    gtxtDimensionCombination := '';
+                                    gTXTCOMBDESCCOUNT := '此处往下空白';
+                                    DebitAmount :=0;
+                                    CreditAmount :=0;
+                                    g_txtAccountName := '';
+                                    g_codAccountNo := '';
+                                  END;
+
+                                  IF Number > 2 THEN
+                                    gTXTCOMBDESCCOUNT := '';
+                                END;
+                                 }
+
+    { 7272;2   ;Column  ;Integer_Number      ;
+               SourceExpr=Number }
+
+    { 1000000007;2;Column;Empty1_            ;
+               SourceExpr=Empty1 }
+
+    { 1000000005;2;Column;Empty2_            ;
+               SourceExpr=Empty2 }
+
+    { 1000000006;2;Column;EmptyLine_         ;
+               SourceExpr=EmptyLine }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=选项;
+                             CHS=选项] }
+
+      { 1117700000;2;Field  ;
+                  CaptionML=[ENU=Combination Option;
+                             CHS=凭证合并选择];
+                  OptionCaptionML=[ENU=By DocNo/AccNo,By DocNo/AccNo/Dimension;
+                                   CHS=按凭证号/科目,按凭证号/科目/维值];
+                  SourceExpr=gOptCombine }
+
+      { 1117700002;2;Field  ;
+                  CaptionML=[ENU=Combination Description;
+                             CHS=Combination Description];
+                  SourceExpr=gTxtCombDes }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      gRecCompInfo@1117700002 : Record 79;
+      gOptCombine@1117700005 : 'Doc/Acc,Doc/Acc/Dim';
+      gTxtCombDes@1117700006 : Text[100];
+      DimMgt@1117700001 : Codeunit 408;
+      gRecVoucher@1117700000 : Record 52002203;
+      gIntPage@1117700003 : Integer;
+      Window@1117700004 : Dialog;
+      "----Tectura---"@1117700019 : Integer;
+      FixLine@1117700018 : Boolean;
+      LineCount@1117700017 : Integer;
+      LineInt@1117700016 : Integer;
+      GLEntry@1117700015 : Record 17;
+      TotalLine@1117700014 : Integer;
+      PreparedName@1117700013 : Text[80];
+      CheckedName@1117700012 : Text[80];
+      Manager@1117700011 : Text[80];
+      RecUser@1117700010 : Record 2000000120;
+      DocumentNo@1117700009 : Code[20];
+      PageNo@1117700008 : Integer;
+      LocalizationPackageSetup@1117700007 : Record 52002202;
+      RecVoucher@1117700020 : Record 52002203;
+      Voucher_CombinationCaptionLbl@1113638354 : TextConst 'ENU=Voucher;CHS=凭证';
+      Company_Name_CaptionLbl@1126107584 : TextConst 'ENU=Company;CHS=公司';
+      Voucher_No__CaptionLbl@1122072826 : TextConst 'ENU=Voucher No.;CHS=凭证编号';
+      Page_CaptionLbl@1148016431 : TextConst 'ENU=Page No.;CHS=页数';
+      Attachment__CaptionLbl@1125553904 : TextConst 'ENU=Attachment;CHS=附件';
+      Company_Name_Caption_Control1117700000Lbl@1156512204 : TextConst 'ENU=Company;CHS=公司';
+      Voucher_CombinationCaption_Control1117700005Lbl@1127368853 : TextConst 'ENU=Voucher;CHS=凭证';
+      Voucher_No__Caption_Control1117700011Lbl@1147838517 : TextConst 'ENU=Document No.;CHS=单据编号';
+      Page_Caption_Control1117700012Lbl@1145799658 : TextConst 'ENU=Page No.;CHS=页数';
+      EmptyStringCaptionLbl@1177551061 : TextConst 'ENU=/;CHS=/';
+      Attachment__Caption_Control1117700090Lbl@1124674766 : TextConst 'ENU=Attachment;CHS=附件';
+      ExplanationCaptionLbl@1138699180 : TextConst 'ENU=Description;CHS=说明';
+      Gen_Leg_AccCaptionLbl@1178601452 : TextConst 'ENU=Account;CHS=科目';
+      CreditCaptionLbl@1176080837 : TextConst 'ENU=Credit;CHS=贷方';
+      Amount__LCY_CaptionLbl@1156136807 : TextConst 'ENU=Amount;CHS=金额';
+      DebitCaptionLbl@1110318027 : TextConst 'ENU=Debit;CHS=借方';
+      Prepared_CaptionLbl@1186908292 : TextConst 'ENU=Prepared;CHS=制单人';
+      Total_AmountCaptionLbl@1175045739 : TextConst 'ENU=Total;CHS=总计';
+      Checked_CaptionLbl@1119763594 : TextConst 'ENU=Checked;CHS=复核';
+      Manager_CaptionLbl@1156844678 : TextConst 'ENU=Manager;CHS=主管';
+      GLSetup@1000000002 : Record 98;
+      g_txtAccountName@1000000001 : Text[50];
+      g_codAccountNo@1000000000 : Code[20];
+      NewPage@1000000012 : Boolean;
+      NewPageCount@1000000011 : Integer;
+      GlobalPageCount@1000000010 : Integer;
+      EmptyLine@1000000009 : Boolean;
+      Empty1@1000000008 : Text[30];
+      Empty2@1000000007 : Integer;
+      Empty3@1000000006 : Text[10];
+      Empty4@1000000005 : Text[10];
+      DebitAmount@1000000004 : Decimal;
+      CreditAmount@1000000003 : Decimal;
+      gTXTCOMBDESCCOUNT@1000000013 : Text[30];
+      gtxtDimensionCombination@1000000014 : Text[250];
+
+    PROCEDURE GetAccName@1000000000("Account No"@1000000000 : Code[20]) : Text[100];
+    VAR
+      "G/L Account"@1000000001 : Record 15;
+    BEGIN
+      IF "Account No"<>'' THEN BEGIN
+        "G/L Account".GET("Account No");
+         EXIT("G/L Account".Name);
+      END;
+    END;
+
+    BEGIN
+    {
+      #TECMC.013    06-08-29 17:15:06    TECSH.MC    Voucher Combination by Doc/Acc/Dimension
+
+      #1 Tectura
+       - Fixed Line
+
+      #2 Tectura
+       - Add the name of Manager,Checked,Prepared
+      EDD277 2010-10-11 ALPHA ZHANG - ADD CODE FOR COA
+    }
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:SecurityType>None</rd:SecurityType>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+      <Fields>
+        <Field Name="FORMAT__Posting_Date__0___Year4___Month___Day___">
+          <DataField>FORMAT__Posting_Date__0___Year4___Month___Day___</DataField>
+        </Field>
+        <Field Name="gRecCompInfo_Name">
+          <DataField>gRecCompInfo_Name</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Voucher_Entry___Voucher_No__">
+          <DataField>Voucher_Entry__Voucher_Entry___Voucher_No__</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Voucher_Entry___Document_No__">
+          <DataField>Voucher_Entry__Voucher_Entry___Document_No__</DataField>
+        </Field>
+        <Field Name="gIntPage">
+          <DataField>gIntPage</DataField>
+        </Field>
+        <Field Name="G_L_Entry__Attachment">
+          <DataField>G_L_Entry__Attachment</DataField>
+        </Field>
+        <Field Name="gRecCompInfo_Name_Control1117700001">
+          <DataField>gRecCompInfo_Name_Control1117700001</DataField>
+        </Field>
+        <Field Name="FORMAT__Posting_Date__0___Year4___Month___Day____Control1117700004">
+          <DataField>FORMAT__Posting_Date__0___Year4___Month___Day____Control1117700004</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Voucher_Entry___Document_No___Control1117700013">
+          <DataField>Voucher_Entry__Voucher_Entry___Document_No___Control1117700013</DataField>
+        </Field>
+        <Field Name="gIntPage_Control1117700014">
+          <DataField>gIntPage_Control1117700014</DataField>
+        </Field>
+        <Field Name="PageNo">
+          <DataField>PageNo</DataField>
+        </Field>
+        <Field Name="G_L_Entry__Attachment_Control1117700089">
+          <DataField>G_L_Entry__Attachment_Control1117700089</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Document_No__">
+          <DataField>Voucher_Entry__Document_No__</DataField>
+        </Field>
+        <Field Name="gTxtCombDes______FORMAT_fIntEntryCount_____">
+          <DataField>gTxtCombDes______FORMAT_fIntEntryCount_____</DataField>
+        </Field>
+        <Field Name="GetAccName__G_L_Account_No___">
+          <DataField>GetAccName__G_L_Account_No___</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__G_L_Account_No__">
+          <DataField>Voucher_Entry__G_L_Account_No__</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Debit_Amount_">
+          <DataField>Voucher_Entry__Debit_Amount_</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Debit_Amount_Format">
+          <DataField>Voucher_Entry__Debit_Amount_Format</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Credit_Amount_">
+          <DataField>Voucher_Entry__Credit_Amount_</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Credit_Amount_Format">
+          <DataField>Voucher_Entry__Credit_Amount_Format</DataField>
+        </Field>
+        <Field Name="Global_Dimension_1_Code_______Global_Dimension_2_Code______fCodShortcutDim3_____fCodShortcutDim4_____fCodShortcutDim5_____fCodShortcutDim6_____fCodShortcutDim7_____fCodShortcutDim8">
+          <DataField>Global_Dimension_1_Code_______Global_Dimension_2_Code______fCodShortcutDim3_____fCodShortcutDim4_____fCodShortcutDim5_____fCodShortcutDim6_____fCodShortcutDim7_____fCodShortcutDim8</DataField>
+        </Field>
+        <Field Name="gOptCombine____1">
+          <DataField>gOptCombine____1</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Debit_Amount__Control1117700066">
+          <DataField>Voucher_Entry__Debit_Amount__Control1117700066</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Debit_Amount__Control1117700066Format">
+          <DataField>Voucher_Entry__Debit_Amount__Control1117700066Format</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Credit_Amount__Control1117700070">
+          <DataField>Voucher_Entry__Credit_Amount__Control1117700070</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Credit_Amount__Control1117700070Format">
+          <DataField>Voucher_Entry__Credit_Amount__Control1117700070Format</DataField>
+        </Field>
+        <Field Name="PreparedName">
+          <DataField>PreparedName</DataField>
+        </Field>
+        <Field Name="CheckedName">
+          <DataField>CheckedName</DataField>
+        </Field>
+        <Field Name="Manager">
+          <DataField>Manager</DataField>
+        </Field>
+        <Field Name="Voucher_CombinationCaption">
+          <DataField>Voucher_CombinationCaption</DataField>
+        </Field>
+        <Field Name="Company_Name_Caption">
+          <DataField>Company_Name_Caption</DataField>
+        </Field>
+        <Field Name="Voucher_No__Caption">
+          <DataField>Voucher_No__Caption</DataField>
+        </Field>
+        <Field Name="Page_Caption">
+          <DataField>Page_Caption</DataField>
+        </Field>
+        <Field Name="Attachment__Caption">
+          <DataField>Attachment__Caption</DataField>
+        </Field>
+        <Field Name="Company_Name_Caption_Control1117700000">
+          <DataField>Company_Name_Caption_Control1117700000</DataField>
+        </Field>
+        <Field Name="Voucher_CombinationCaption_Control1117700005">
+          <DataField>Voucher_CombinationCaption_Control1117700005</DataField>
+        </Field>
+        <Field Name="Voucher_No__Caption_Control1117700011">
+          <DataField>Voucher_No__Caption_Control1117700011</DataField>
+        </Field>
+        <Field Name="Page_Caption_Control1117700012">
+          <DataField>Page_Caption_Control1117700012</DataField>
+        </Field>
+        <Field Name="EmptyStringCaption">
+          <DataField>EmptyStringCaption</DataField>
+        </Field>
+        <Field Name="Attachment__Caption_Control1117700090">
+          <DataField>Attachment__Caption_Control1117700090</DataField>
+        </Field>
+        <Field Name="ExplanationCaption">
+          <DataField>ExplanationCaption</DataField>
+        </Field>
+        <Field Name="Gen_Leg_AccCaption">
+          <DataField>Gen_Leg_AccCaption</DataField>
+        </Field>
+        <Field Name="CreditCaption">
+          <DataField>CreditCaption</DataField>
+        </Field>
+        <Field Name="Amount__LCY_Caption">
+          <DataField>Amount__LCY_Caption</DataField>
+        </Field>
+        <Field Name="DebitCaption">
+          <DataField>DebitCaption</DataField>
+        </Field>
+        <Field Name="Voucher_Entry__Document_No__Caption">
+          <DataField>Voucher_Entry__Document_No__Caption</DataField>
+        </Field>
+        <Field Name="Prepared_Caption">
+          <DataField>Prepared_Caption</DataField>
+        </Field>
+        <Field Name="Total_AmountCaption">
+          <DataField>Total_AmountCaption</DataField>
+        </Field>
+        <Field Name="Checked_Caption">
+          <DataField>Checked_Caption</DataField>
+        </Field>
+        <Field Name="Manager_Caption">
+          <DataField>Manager_Caption</DataField>
+        </Field>
+        <Field Name="Voucher_Entry_fBlnCredit">
+          <DataField>Voucher_Entry_fBlnCredit</DataField>
+        </Field>
+        <Field Name="Voucher_Entry_Global_Dimension_1_Code">
+          <DataField>Voucher_Entry_Global_Dimension_1_Code</DataField>
+        </Field>
+        <Field Name="Voucher_Entry_Global_Dimension_2_Code">
+          <DataField>Voucher_Entry_Global_Dimension_2_Code</DataField>
+        </Field>
+        <Field Name="Voucher_Entry_fCodShortcutDim3">
+          <DataField>Voucher_Entry_fCodShortcutDim3</DataField>
+        </Field>
+        <Field Name="Voucher_Entry_fCodShortcutDim4">
+          <DataField>Voucher_Entry_fCodShortcutDim4</DataField>
+        </Field>
+        <Field Name="Voucher_Entry_fCodShortcutDim5">
+          <DataField>Voucher_Entry_fCodShortcutDim5</DataField>
+        </Field>
+        <Field Name="Voucher_Entry_fCodShortcutDim6">
+          <DataField>Voucher_Entry_fCodShortcutDim6</DataField>
+        </Field>
+        <Field Name="Voucher_Entry_fCodShortcutDim7">
+          <DataField>Voucher_Entry_fCodShortcutDim7</DataField>
+        </Field>
+        <Field Name="Voucher_Entry_fCodShortcutDim8">
+          <DataField>Voucher_Entry_fCodShortcutDim8</DataField>
+        </Field>
+        <Field Name="G_L_Entry_Document_No__">
+          <DataField>G_L_Entry_Document_No__</DataField>
+        </Field>
+        <Field Name="NewPageFlag">
+          <DataField>NewPageFlag</DataField>
+        </Field>
+        <Field Name="NewPageGroup">
+          <DataField>NewPageGroup</DataField>
+        </Field>
+        <Field Name="FixLine_">
+          <DataField>FixLine_</DataField>
+        </Field>
+        <Field Name="Integer_Number">
+          <DataField>Integer_Number</DataField>
+        </Field>
+        <Field Name="Empty1_">
+          <DataField>Empty1_</DataField>
+        </Field>
+        <Field Name="Empty2_">
+          <DataField>Empty2_</DataField>
+        </Field>
+        <Field Name="EmptyLine_">
+          <DataField>EmptyLine_</DataField>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="Table1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>6.50001cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>5.79999cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.3cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.30317cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>1.11999cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="ExplanationCaption2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!ExplanationCaption.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Color>Black</Color>
+                              <Width>1pt</Width>
+                            </BottomBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Gen_Leg_AccCaption2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Gen_Leg_AccCaption.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Color>Black</Color>
+                              <Width>1pt</Width>
+                            </BottomBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="rectangle5">
+                          <ReportItems>
+                            <Textbox Name="Amount__LCY_Caption2">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=First(Fields!Amount__LCY_Caption.Value)</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <Height>0.55cm</Height>
+                              <Width>4.6cm</Width>
+                              <Style>
+                                <Border>
+                                  <Style>Solid</Style>
+                                </Border>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="DebitCaption2">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=First(Fields!DebitCaption.Value)</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.55cm</Top>
+                              <Height>0.57cm</Height>
+                              <Width>2.3cm</Width>
+                              <ZIndex>1</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>Solid</Style>
+                                </Border>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="CreditCaption2">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=First(Fields!CreditCaption.Value)</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.55cm</Top>
+                              <Left>2.30317cm</Left>
+                              <Height>0.57cm</Height>
+                              <Width>2.3cm</Width>
+                              <ZIndex>2</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>Solid</Style>
+                                </Border>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <DataElementOutput>ContentsOnly</DataElementOutput>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                          </Style>
+                        </Rectangle>
+                        <ColSpan>2</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox5">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.SetVoucherNo(Fields!Voucher_Entry__Voucher_Entry___Voucher_No__.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox5</rd:DefaultName>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox6">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.SetDocumentNo(Fields!Voucher_Entry__Voucher_Entry___Document_No__.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox6</rd:DefaultName>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox7">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Voucher_No__Caption_Control1117700011,"Table1_Group")</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox7</rd:DefaultName>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox8">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox8</rd:DefaultName>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox9">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox9</rd:DefaultName>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox10">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox10</rd:DefaultName>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox11">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox11</rd:DefaultName>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox12">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox12</rd:DefaultName>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox13">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox13</rd:DefaultName>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>1cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="rectangle2">
+                          <ReportItems>
+                            <Textbox Name="gTxtCombDes______FORMAT_fIntEntryCount_____">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!gTxtCombDes______FORMAT_fIntEntryCount_____.Value</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Left</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <Height>0.5cm</Height>
+                              <Width>6.5cm</Width>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Global_Dimension_1_Code_______Global_Dimension_2_Code______fCodShortcutDim3_____fCodShortcutDim4_____fCodShortcutDim5_____fCodShortcutDim6_____fCodShortcutDim7_____fCodShortcutDim8">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!Global_Dimension_1_Code_______Global_Dimension_2_Code______fCodShortcutDim3_____fCodShortcutDim4_____fCodShortcutDim5_____fCodShortcutDim6_____fCodShortcutDim7_____fCodShortcutDim8.Value</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Left</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.5cm</Top>
+                              <Height>0.5cm</Height>
+                              <Width>6.5cm</Width>
+                              <ZIndex>1</ZIndex>
+                              <Visibility>
+                                <Hidden>=iif(Fields!gOptCombine____1.Value,false,true)</Hidden>
+                              </Visibility>
+                              <DataElementOutput>NoOutput</DataElementOutput>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <DataElementOutput>ContentsOnly</DataElementOutput>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                          </Style>
+                        </Rectangle>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="rectangle3">
+                          <ReportItems>
+                            <Textbox Name="GetAccName__G_L_Account_No___">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!GetAccName__G_L_Account_No___.Value</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Left</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <Height>0.5cm</Height>
+                              <Width>5.69788cm</Width>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Voucher_Entry__G_L_Account_No__">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!Voucher_Entry__G_L_Account_No__.Value</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Left</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.55cm</Top>
+                              <Height>0.45cm</Height>
+                              <Width>5.69788cm</Width>
+                              <ZIndex>1</ZIndex>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <DataElementOutput>ContentsOnly</DataElementOutput>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                          </Style>
+                        </Rectangle>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Voucher_Entry__Debit_Amount_">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.BlankZero(Fields!Voucher_Entry__Debit_Amount_.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Debit_Amount_Format.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Voucher_Entry__Credit_Amount_">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.BlankZero(Fields!Voucher_Entry__Credit_Amount_.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Voucher_CombinationCaption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Voucher_CombinationCaption.Value, "Table1_Group")</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Style>Solid</Style>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FORMAT__Posting_Date__0___Year4___Month___Day___">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!FORMAT__Posting_Date__0___Year4___Month___Day___.Value, "Table1_Group")</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Company_Name_Caption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Company_Name_Caption.Value, "Table1_Group")</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="gRecCompInfo_Name">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!gRecCompInfo_Name.Value, "Table1_Group")</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Voucher_No__Caption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Voucher_No__Caption.Value, "Table1_Group") 
+&amp; Code.SetPageDesc(Fields!NewPageGroup.Value+1 &amp;"/"&amp; Fields!PageNo.Value)
+&amp; Code.SetFixLine(Fields!FixLine_.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Voucher_Entry__Voucher_Entry___Document_No__">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FIRST(Fields!Voucher_Entry__Document_No__Caption.Value,"Table1_Group")</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Page_Caption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Page_Caption.Value, "Table1_Group")</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Attachment__Caption">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Attachment__Caption.Value, "Table1_Group")</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="G_L_Entry__Attachment">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!G_L_Entry__Attachment.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!Voucher_Entry__Credit_Amount_Format.Value</Format>
+                                    <Color>#ff0000</Color>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Visibility>
+                            <Hidden>true</Hidden>
+                          </Visibility>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>1.2cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Total_AmountCaption2">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Total_AmountCaption.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>0.06cm</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="TextBox17">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Voucher_Entry__Debit_Amount__Control1117700067">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.FormatNumbers(Sum(Fields!Voucher_Entry__Debit_Amount_.Value))</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Format>=First(Fields!Voucher_Entry__Debit_Amount__Control1117700066Format.Value)</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Voucher_Entry__Credit_Amount__Control1117700071">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.FormatNumbers(Sum(Fields!Voucher_Entry__Credit_Amount_.Value))</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Format>=First(Fields!Voucher_Entry__Credit_Amount__Control1117700070Format.Value)</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox190">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox190</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox191">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox191</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox192">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox192</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox193">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox193</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox194">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox194</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox195">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox195</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox196">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox196</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox197">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox197</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox198">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox198</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>1.02646cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="rectangle6">
+                          <ReportItems>
+                            <Textbox Name="Checked_Caption2">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=First(Fields!Checked_Caption.Value)</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.154cm</Top>
+                              <Left>6.03175cm</Left>
+                              <Height>0.84236cm</Height>
+                              <Width>1.8351cm</Width>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Prepared_Caption2">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=First(Fields!Prepared_Caption.Value)</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.154cm</Top>
+                              <Left>12.03694cm</Left>
+                              <Height>0.84236cm</Height>
+                              <Width>1.93122cm</Width>
+                              <ZIndex>1</ZIndex>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="PreparedName2">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=First(Fields!PreparedName.Value)</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.154cm</Top>
+                              <Left>14.07399cm</Left>
+                              <Height>0.84236cm</Height>
+                              <Width>2.59268cm</Width>
+                              <ZIndex>2</ZIndex>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="CheckedName2">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=First(Fields!CheckedName.Value)</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.154cm</Top>
+                              <Left>8.04324cm</Left>
+                              <Height>0.84236cm</Height>
+                              <Width>2.35358cm</Width>
+                              <ZIndex>3</ZIndex>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Manager_Caption2">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=First(Fields!Manager_Caption.Value)</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.1841cm</Top>
+                              <Height>0.84236cm</Height>
+                              <Width>1.5078cm</Width>
+                              <ZIndex>4</ZIndex>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                            <Textbox Name="Manager2">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=First(Fields!Manager.Value)</Value>
+                                      <Style>
+                                        <FontSize>7pt</FontSize>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <Top>0.1841cm</Top>
+                              <Left>1.68419cm</Left>
+                              <Height>0.84236cm</Height>
+                              <Width>2.73386cm</Width>
+                              <ZIndex>5</ZIndex>
+                              <Style>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <DataElementOutput>ContentsOnly</DataElementOutput>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <TopBorder>
+                              <Color>Black</Color>
+                              <Width>1pt</Width>
+                            </TopBorder>
+                          </Style>
+                        </Rectangle>
+                        <ColSpan>4</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox204">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox204</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <LeftBorder>
+                              <Color>Black</Color>
+                              <Width>1pt</Width>
+                            </LeftBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox205">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox205</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox206">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox206</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox207">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox207</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox208">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox208</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox209">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox209</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox210">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox210</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox211">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox211</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox212">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox212</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <Group Name="Group1">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!G_L_Entry_Document_No__.Value</GroupExpression>
+                    </GroupExpressions>
+                    <PageBreak>
+                      <BreakLocation>Between</BreakLocation>
+                      <ResetPageNumber>true</ResetPageNumber>
+                    </PageBreak>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!G_L_Entry_Document_No__.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <TablixHeader>
+                    <Size>0.07938cm</Size>
+                    <CellContents>
+                      <Textbox Name="Group1">
+                        <CanGrow>true</CanGrow>
+                        <KeepTogether>true</KeepTogether>
+                        <Paragraphs>
+                          <Paragraph>
+                            <TextRuns>
+                              <TextRun>
+                                <Value>=Fields!G_L_Entry_Document_No__.Value</Value>
+                                <Style>
+                                  <FontSize>7pt</FontSize>
+                                  <FontWeight>Bold</FontWeight>
+                                </Style>
+                              </TextRun>
+                            </TextRuns>
+                            <Style>
+                              <TextAlign>Center</TextAlign>
+                            </Style>
+                          </Paragraph>
+                        </Paragraphs>
+                        <rd:DefaultName>Group1</rd:DefaultName>
+                        <Visibility>
+                          <Hidden>true</Hidden>
+                        </Visibility>
+                        <Style>
+                          <Border>
+                            <Style>None</Style>
+                          </Border>
+                          <VerticalAlign>Middle</VerticalAlign>
+                          <PaddingLeft>2pt</PaddingLeft>
+                          <PaddingRight>2pt</PaddingRight>
+                          <PaddingTop>2pt</PaddingTop>
+                          <PaddingBottom>2pt</PaddingBottom>
+                        </Style>
+                      </Textbox>
+                      <rd:Selected>true</rd:Selected>
+                    </CellContents>
+                  </TablixHeader>
+                  <TablixMembers>
+                    <TablixMember>
+                      <Group Name="Table1_Group">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!Voucher_Entry__Voucher_Entry___Document_No__.Value</GroupExpression>
+                          <GroupExpression>=Fields!NewPageGroup.Value</GroupExpression>
+                        </GroupExpressions>
+                        <PageBreak>
+                          <BreakLocation>Between</BreakLocation>
+                        </PageBreak>
+                      </Group>
+                      <TablixMembers>
+                        <TablixMember>
+                          <KeepWithGroup>After</KeepWithGroup>
+                        </TablixMember>
+                        <TablixMember>
+                          <Group Name="Table1_Details_Group">
+                            <DataElementName>Detail</DataElementName>
+                          </Group>
+                          <TablixMembers>
+                            <TablixMember />
+                          </TablixMembers>
+                          <DataElementName>Detail_Collection</DataElementName>
+                          <DataElementOutput>Output</DataElementOutput>
+                          <KeepTogether>true</KeepTogether>
+                        </TablixMember>
+                      </TablixMembers>
+                    </TablixMember>
+                    <TablixMember>
+                      <KeepWithGroup>Before</KeepWithGroup>
+                    </TablixMember>
+                    <TablixMember>
+                      <KeepWithGroup>Before</KeepWithGroup>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet_Result</DataSetName>
+            <PageBreak>
+              <BreakLocation>End</BreakLocation>
+            </PageBreak>
+            <Height>4.34645cm</Height>
+            <Width>17.69697cm</Width>
+            <Style />
+          </Tablix>
+        </ReportItems>
+        <Height>4.34646cm</Height>
+        <Style />
+      </Body>
+      <Width>17.69697cm</Width>
+      <Page>
+        <PageHeader>
+          <Height>2.77cm</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <ReportItems>
+            <Textbox Name="Voucher_CombinationCaption1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!Voucher_CombinationCaption.Value</Value>
+                      <Style>
+                        <FontFamily>宋体</FontFamily>
+                        <FontSize>17pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Left>4.7619cm</Left>
+              <Height>0.846cm</Height>
+              <Width>7.30159cm</Width>
+              <Style>
+                <BottomBorder>
+                  <Color>Black</Color>
+                  <Style>Solid</Style>
+                  <Width>1pt</Width>
+                </BottomBorder>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="FORMAT__Posting_Date__0___Year4___Month___Day___1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!FORMAT__Posting_Date__0___Year4___Month___Day___.Value</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.13757cm</Top>
+              <Left>6.03175cm</Left>
+              <Height>0.43cm</Height>
+              <Width>4.7619cm</Width>
+              <ZIndex>1</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Company_Name_Caption1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!Company_Name_Caption.Value</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>2.34cm</Top>
+              <Height>0.43cm</Height>
+              <Width>1.58718cm</Width>
+              <ZIndex>2</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="gRecCompInfo_Name1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!gRecCompInfo_Name.Value</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>2.34cm</Top>
+              <Left>1.35787cm</Left>
+              <Height>0.43cm</Height>
+              <Width>8.00711cm</Width>
+              <ZIndex>3</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_No__Caption1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!Voucher_No__Caption.Value</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>0.81859cm</Top>
+              <Left>12.72486cm</Left>
+              <Height>0.43cm</Height>
+              <Width>2.18219cm</Width>
+              <ZIndex>4</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_Entry__Voucher_Entry___Document_No__1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetVoucherNo()</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>0.81859cm</Top>
+              <Left>14.94233cm</Left>
+              <Height>0.43cm</Height>
+              <Width>1.96084cm</Width>
+              <ZIndex>5</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Page_Caption1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Reportitems!Page_Caption.Value</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.26833cm</Top>
+              <Left>12.72486cm</Left>
+              <Height>0.43cm</Height>
+              <Width>2.18219cm</Width>
+              <ZIndex>6</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="PageNumber">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=IIF(Code.GetFixLine(),Code.GetPageDesc(),Globals!PageNumber &amp; "/" &amp; Globals!TotalPages)</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.26833cm</Top>
+              <Left>14.94233cm</Left>
+              <Height>0.43cm</Height>
+              <Width>1.96084cm</Width>
+              <ZIndex>7</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Attachment__Caption1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!Attachment__Caption.Value</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>2.30472cm</Top>
+              <Left>12.72486cm</Left>
+              <Height>0.43cm</Height>
+              <Width>2.18219cm</Width>
+              <ZIndex>8</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="G_L_Entry__Attachment1">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!G_L_Entry__Attachment.Value</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>2.30472cm</Top>
+              <Left>14.94233cm</Left>
+              <Height>0.43cm</Height>
+              <Width>1.96084cm</Width>
+              <ZIndex>9</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Line Name="line1">
+              <Top>0.95238cm</Top>
+              <Left>4.7619cm</Left>
+              <Height>0cm</Height>
+              <Width>7.30159cm</Width>
+              <ZIndex>10</ZIndex>
+              <Style>
+                <Border>
+                  <Style>Solid</Style>
+                </Border>
+              </Style>
+            </Line>
+            <Textbox Name="Voucher_No__Caption2">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=ReportItems!Voucher_Entry__Voucher_Entry___Document_No__.Value</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.76889cm</Top>
+              <Left>12.72486cm</Left>
+              <Height>0.43cm</Height>
+              <Width>2.18219cm</Width>
+              <ZIndex>11</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Voucher_Entry__Voucher_Entry___Document_No__2">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetDocumentNo()</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>1.76889cm</Top>
+              <Left>14.94233cm</Left>
+              <Height>0.43cm</Height>
+              <Width>1.96084cm</Width>
+              <ZIndex>12</ZIndex>
+              <Style>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+          </ReportItems>
+          <Style />
+        </PageHeader>
+        <PageHeight>14.8cm</PageHeight>
+        <PageWidth>21cm</PageWidth>
+        <InteractiveHeight>29.7cm</InteractiveHeight>
+        <InteractiveWidth>20.945cm</InteractiveWidth>
+        <LeftMargin>1.5cm</LeftMargin>
+        <RightMargin>0.5cm</RightMargin>
+        <TopMargin>1.5cm</TopMargin>
+        <BottomMargin>1.8cm</BottomMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function FormatNumbers(ByVal Value As Decimal)
+  if Value = 0
+    Return ""
+  else
+    Return FormatNumber(Value)
+  end if
+End Function
+
+Shared offset as Integer
+Shared newPage as Object
+Shared currentgroup1 as Object
+
+
+Shared DocumentNo as Object
+Shared VoucherNo as Object
+
+Public Function SetDocumentNo(ByVal Value As Object)
+  DocumentNo = Value
+End Function
+
+Public Function GetDocumentNo() as Object
+  Return DocumentNo
+End Function
+
+Public Function SetVoucherNo(ByVal Value As Object)
+  VoucherNo = Value
+End Function
+
+Public Function GetVoucherNo() as Object
+  Return VoucherNo
+End Function
+
+Public Function GetGroupPageNumber(NewPage as Boolean, pagenumber as Integer) as Object
+  If NewPage
+    offset = pagenumber - 1
+  End If
+  Return pagenumber - offset
+End Function
+
+Public Function IsNewPage(group1 as Object) As Boolean
+  newPage = FALSE
+  If Not (group1 = currentgroup1)
+    newPage = TRUE
+    currentgroup1 = group1
+  End If
+  Return newPage
+End Function
+
+Shared PageDesc as Object
+
+Public Function SetPageDesc(ByVal Value As Object)
+  PageDesc = Value
+End Function
+
+Public Function GetPageDesc() as Object
+  Return PageDesc
+End Function
+
+Shared PageFixLine as Object
+
+Public Function SetFixLine(ByVal Value As Object)
+  PageFixLine= Value
+End Function
+
+Public Function GetFixLine() as Object
+  Return PageFixLine
+End Function</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Cm</rd:ReportUnitType>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

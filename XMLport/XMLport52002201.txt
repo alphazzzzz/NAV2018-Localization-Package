@@ -1,0 +1,229 @@
+OBJECT XMLport 52002201 GT Export XML file
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/06/17;
+    Time=15:09:30;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    OnPreXMLport=BEGIN
+                   g_recGTSetup.GET;
+                 END;
+
+  }
+  ELEMENTS
+  {
+    { [{73ED3289-C62C-441E-815E-AC4FDDA8B90F}];  ;Kp                  ;Element ;Text     }
+
+    { [{FBC73ADF-A3BD-459A-9B8B-1B5747618515}];1 ;Version             ;Element ;Text    ;
+                                                  Export::OnBeforePassVariable=BEGIN
+                                                                                 Version:='2.0';
+                                                                               END;
+                                                                                }
+
+    { [{057F8DC8-B918-4DA7-9874-E208D2190243}];1 ;Fpxx                ;Element ;Text     }
+
+    { [{8C4EF9FF-8E57-4805-A0A8-D4AC20204825}];2 ;Zsl                 ;Element ;Text     }
+
+    { [{5FEC206B-13FD-4F8D-9184-48001518588E}];2 ;Fpsj                ;Element ;Table   ;
+                                                  SourceTable=Table36;
+                                                  Export::OnAfterGetRecord=VAR
+                                                                             l_recCustomerBank@1000 : Record 287;
+                                                                             l_recCustomer@1002 : Record 18;
+                                                                           BEGIN
+                                                                             g_intDjh:=0;
+
+                                                                             l_recCustomerBank.SETRANGE("Customer No.","Sales Header"."Bill-to Customer No.");
+                                                                             IF (l_recCustomerBank.FIND('-')) AND ((l_recCustomerBank.Name + l_recCustomerBank."Bank Account No.") <> '') THEN BEGIN
+                                                                               Gfyhzh:= l_recCustomerBank."Bank Account No.";
+                                                                             END;
+
+                                                                             l_recCustomer.GET("Sales Header"."Bill-to Customer No.");
+                                                                             Gfdzdh := "Sales Header"."Bill-to Address"+l_recCustomer."Phone No.";
+                                                                           END;
+                                                                            }
+
+    { [{8E776D3B-BCDE-4E24-94CF-ABA5E09D2029}];3 ;Fp                  ;Element ;Table   ;
+                                                  SourceTable=Table52002201;
+                                                  LinkFields=Field20=FIELD(Field3);
+                                                  LinkTable=Sales Header;
+                                                  Export::OnAfterGetRecord=BEGIN
+                                                                             g_decInvLineNumber :=CountOutputJSLine("GT Invoice Line","Sales Header",g_recGTSetup."Max Invoice Lines",g_recGTSetup."Max Invoice Amount");
+                                                                             g_intDjh:=g_intDjh+1;
+                                                                             g_intXh:=0;
+                                                                           END;
+                                                                            }
+
+    { [{CD514467-61DB-4896-9D04-87199FED79E6}];4 ;Djh                 ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=GT Invoice Line::Navision Phantom No. }
+
+    { [{5ECEE4AB-6F95-41E3-854F-19814242D0FF}];4 ;Gfmc                ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Sales Header::Bill-to Name }
+
+    { [{18DDC211-EE33-4263-8B73-65E854ED3111}];4 ;Gfsh                ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Sales Header::VAT Registration No. }
+
+    { [{DA135069-132B-488F-A59C-2BED10C2822E}];4 ;Gfyhzh              ;Element ;Text     }
+
+    { [{9F80E654-0661-4EDE-8C8A-04870B18EADD}];4 ;Gfdzdh              ;Element ;Text     }
+
+    { [{A5F51658-FE61-4753-9EA0-60F6B63EA4A9}];4 ;Bz                  ;Element ;Text     }
+
+    { [{915A794F-90BB-46D8-AD5D-DCDB6EC51526}];4 ;Fhr                 ;Element ;Text    ;
+                                                  Export::OnBeforePassVariable=BEGIN
+                                                                                 Fhr:=g_recGTSetup.Checker;
+                                                                               END;
+                                                                                }
+
+    { [{3BAB6DB2-F1E3-46C2-940A-09C01EA5C254}];4 ;Skr                 ;Element ;Text    ;
+                                                  Export::OnBeforePassVariable=BEGIN
+                                                                                 Skr:=g_recGTSetup.Payee;
+                                                                               END;
+                                                                                }
+
+    { [{3E19CBFF-490E-4D86-94FF-976FF0BFB9E0}];4 ;Spbmbbh             ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Sales Header::No. }
+
+    { [{F7B0BDFD-5A9A-427F-9B56-A4B6F5E43824}];4 ;Hsbz                ;Element ;Text    ;
+                                                  Export::OnBeforePassVariable=BEGIN
+                                                                                 Hsbz:='2';
+                                                                               END;
+                                                                                }
+
+    { [{CF7C6C1C-FC92-442E-A503-63D901BB95C4}];4 ;Spxx                ;Element ;Text     }
+
+    { [{355E375C-49E9-4541-88B1-C37552C1D212}];5 ;Sph                 ;Element ;Table   ;
+                                                  SourceTable=Table2000000026;
+                                                  Export::OnPreXMLItem=BEGIN
+                                                                         Integer.SETRANGE(Number,1,g_decInvLineNumber);
+                                                                       END;
+
+                                                  Export::OnAfterGetRecord=BEGIN
+                                                                             IF Integer.Number>1 THEN
+                                                                               "GT Invoice Line".NEXT;
+                                                                             g_intXh:=g_intXh+1;
+                                                                           END;
+                                                                            }
+
+    { [{B7B2847C-F63B-4C8B-891F-66FA28CCB984}];6 ;Xh                  ;Element ;Text    ;
+                                                  Export::OnBeforePassVariable=BEGIN
+                                                                                 Xh:=FORMAT(g_intXh);
+                                                                               END;
+                                                                                }
+
+    { [{E4AF9246-9252-4EB3-91C7-820C4C43A628}];6 ;Spmc                ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=GT Invoice Line::Description }
+
+    { [{3A4B0A81-2082-4D47-977A-68529328C772}];6 ;Ggxh                ;Element ;Text     }
+
+    { [{D68BB05E-A4E8-4CD7-B7C3-C23337B87301}];6 ;Jldw                ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=GT Invoice Line::Unit of Measure }
+
+    { [{EA6E67B0-5A03-4BE8-BA1A-D87AD075BAFE}];6 ;Spbm                ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=GT Invoice Line::GST }
+
+    { [{E91CE41E-FA9E-41B0-B26A-3070C781E41A}];6 ;Qyspbm              ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=GT Invoice Line::SalesLine No. }
+
+    { [{E3F31132-7BAD-422D-A992-1189D9138FE0}];6 ;Syyhzcbz            ;Element ;Text    ;
+                                                  Export::OnBeforePassVariable=BEGIN
+                                                                                 Syyhzcbz:='0';
+                                                                               END;
+                                                                                }
+
+    { [{0E91F958-A88A-48C5-AE4D-0EF9D92A1FE5}];6 ;Lslbz               ;Element ;Text     }
+
+    { [{CABA496C-A0BE-41E5-84E3-307216B11B8F}];6 ;Yhzcsm              ;Element ;Text     }
+
+    { [{77E7F6F4-2416-4241-9972-5E9E860A9421}];6 ;Dj                  ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=GT Invoice Line::Unit Price }
+
+    { [{EF3EAEF9-35FB-4F5A-A1A3-FAB203AAAC62}];6 ;Sl                  ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=GT Invoice Line::Line Quantity }
+
+    { [{5D3E2971-1538-4F8B-AE11-E997ADC28209}];6 ;Je                  ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=GT Invoice Line::Amount Exc. VAT }
+
+    { [{A668CFCA-AAE3-4A01-862E-9045CA73F131}];6 ;Slv                 ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=GT Invoice Line::VAT% }
+
+    { [{1E7E86D3-919B-4FEA-BF7C-AAE2F3A19EC4}];6 ;Kce                 ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=GT Invoice Line::Discount Amount }
+
+  }
+  EVENTS
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  CODE
+  {
+    VAR
+      g_recGTSetup@1000 : Record 52002200;
+      g_decInvLineNumber@1006 : Integer;
+      g_intDjh@1038 : Integer;
+      g_intXh@1039 : Integer;
+
+    PROCEDURE CountOutputJSLine@1117700007(l_JSInvLine@1117700000 : Record 52002201;l_SalesHeader@1117700003 : Record 36;l_maxInvLine@1117700004 : Integer;l_maxInvAmount@1117700005 : Decimal) : Integer;
+    VAR
+      l_AmountIncVAT@1117700001 : Decimal;
+      l_OutputLine@1117700002 : Integer;
+    BEGIN
+      WITH l_JSInvLine DO BEGIN
+        SETRANGE("Doc Type",l_SalesHeader."Document Type");
+        SETRANGE("Navision Doc No.",l_SalesHeader."No.");
+        //SETRANGE("VAT%","VAT%");
+        SETRANGE("JinSui Invoice No","JinSui Invoice No");
+        EXIT(COUNT);
+        {
+        IF FIND THEN BEGIN
+          l_AmountIncVAT :=0;
+          l_OutputLine :=0;
+          REPEAT
+            IF l_OutputLine=l_maxInvLine THEN EXIT(l_OutputLine);
+            IF l_AmountIncVAT+"Amount Inc. VAT" <= l_maxInvAmount THEN BEGIN
+               l_AmountIncVAT +="Amount Inc. VAT";
+               l_OutputLine +=1;
+            END ELSE
+               EXIT(l_OutputLine);
+          UNTIL NEXT=0;
+          EXIT(l_OutputLine);
+        END ELSE
+          EXIT(0);
+          }
+      END;
+    END;
+
+    PROCEDURE SalesOrderFilter@2(InvoiceNumber@1000 : Integer);
+    BEGIN
+      Zsl:=FORMAT(InvoiceNumber);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

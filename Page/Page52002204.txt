@@ -1,0 +1,65 @@
+OBJECT Page 52002204 Localization Package Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:35:50;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Localization Package Setup;
+               CHS=本地化包设置];
+    SourceTable=Table52002202;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1117700000;1;Group  ;
+                CaptionML=[ENU=General;
+                           CHS=常规] }
+
+    { 1117700001;2;Field  ;
+                SourceExpr=Submit }
+
+    { 1117700003;2;Field  ;
+                SourceExpr="Enable Unified Voucher No." }
+
+    { 1117700018;2;Field  ;
+                SourceExpr="Recurring Jnl. Reverse DF" }
+
+    { 1117700005;2;Field  ;
+                SourceExpr="Fixed Line" }
+
+    { 1117700007;2;Field  ;
+                SourceExpr="Line Count -A4" }
+
+    { 1117700009;2;Field  ;
+                SourceExpr="Line Count -A5" }
+
+    { 1117700011;2;Field  ;
+                SourceExpr=Manager }
+
+    { 1903100501;1;Group  ;
+                CaptionML=[ENU=No. Series;
+                           CHS=编号号码串] }
+
+    { 1117700015;2;Field  ;
+                SourceExpr="Voucher Nos" }
+
+    { 1117700013;2;Field  ;
+                SourceExpr="Same Voucher No. on Reverse" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

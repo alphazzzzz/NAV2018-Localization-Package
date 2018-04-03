@@ -1,0 +1,79 @@
+OBJECT Report 52002224 Clear/Change Search Field
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=12:03:14;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=清除/更改搜索字段;
+               CHS=清除/更改搜索字段];
+    ProcessingOnly=Yes;
+    OnPreReport=BEGIN
+                  Field.RESET;
+                  TmpField.RESET;
+                  TmpField.DELETEALL;
+                  Field.SETFILTER(FieldName,'%1|%2','Search Description','Search Name');
+                  Field.SETRANGE(Type,Field.Type::Code);
+                  IF Field.FINDFIRST THEN
+                    REPEAT
+                      TablePointer.OPEN(Field.TableNo);
+                      TablePointer.RESET;
+                      FieldPointer:=TablePointer.FIELD(Field."No.");
+                      FieldPointer.SETFILTER('<>%1','');
+                      WHILE TablePointer.NEXT<>0 DO BEGIN
+                        FieldPointer.VALUE:='';
+                        TablePointer.MODIFY;
+                      END;
+                      TmpField:=Field;
+                      TmpField.INSERT;
+                      TablePointer.CLOSE;
+                    UNTIL Field.NEXT=0;
+
+                  IF TmpField.FINDFIRST THEN
+                    REPEAT
+                      Field.GET(TmpField.TableNo,TmpField."No.");
+                      Field.Type:=Field.Type::Text;
+                      Field.MODIFY;
+                    UNTIL TmpField.NEXT=0;
+
+                  MESSAGE(Text001);
+                END;
+
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      TablePointer@1117700001 : RecordRef;
+      FieldPointer@1117700000 : FieldRef;
+      Field@1117700002 : Record 2000000041;
+      TmpField@1117700003 : TEMPORARY Record 2000000041;
+      Text001@1117700004 : TextConst 'ENU=Please re-compiles all objects.;CHS=请重新编译所有对象';
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

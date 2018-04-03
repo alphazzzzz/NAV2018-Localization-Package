@@ -1,0 +1,23 @@
+OBJECT Codeunit 50000 aaa
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=23:14:24;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

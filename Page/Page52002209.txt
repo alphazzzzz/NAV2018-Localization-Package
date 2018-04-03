@@ -1,0 +1,86 @@
+OBJECT Page 52002209 Column Layout List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=16:38:52;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    SourceTable=Table334;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1117700000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1117700001;2;Field  ;
+                SourceExpr="Column Layout Name" }
+
+    { 1117700003;2;Field  ;
+                SourceExpr="Line No." }
+
+    { 1117700005;2;Field  ;
+                SourceExpr="Column No." }
+
+    { 1117700007;2;Field  ;
+                SourceExpr="Column Header" }
+
+    { 1117700009;2;Field  ;
+                SourceExpr="Column Type" }
+
+    { 1117700011;2;Field  ;
+                SourceExpr="Ledger Entry Type" }
+
+    { 1117700013;2;Field  ;
+                SourceExpr="Amount Type" }
+
+    { 1117700015;2;Field  ;
+                SourceExpr=Formula }
+
+    { 1117700017;2;Field  ;
+                SourceExpr="Comparison Date Formula" }
+
+    { 1117700019;2;Field  ;
+                SourceExpr="Show Opposite Sign" }
+
+    { 1117700021;2;Field  ;
+                SourceExpr=Show }
+
+    { 1117700023;2;Field  ;
+                SourceExpr="Rounding Factor" }
+
+    { 1117700025;2;Field  ;
+                SourceExpr="Comparison Period Formula" }
+
+    { 1117700027;2;Field  ;
+                SourceExpr="Business Unit Totaling" }
+
+    { 1117700029;2;Field  ;
+                SourceExpr="Dimension 1 Totaling" }
+
+    { 1117700031;2;Field  ;
+                SourceExpr="Dimension 2 Totaling" }
+
+    { 1117700033;2;Field  ;
+                SourceExpr="Dimension 3 Totaling" }
+
+    { 1117700035;2;Field  ;
+                SourceExpr="Dimension 4 Totaling" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

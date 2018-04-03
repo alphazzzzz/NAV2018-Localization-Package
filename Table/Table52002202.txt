@@ -1,0 +1,124 @@
+OBJECT Table 52002202 Localization Package Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:21:23;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Localization Package Setup;
+               CHS=本地化包设置];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primay Key          ;Code10         }
+    { 2   ;   ;Fixed Line          ;Boolean       ;CaptionML=[ENU=Fixed Line;
+                                                              CHS=固定行数] }
+    { 3   ;   ;Line Count -A4      ;Integer       ;CaptionML=[ENU=Line Count -A4;
+                                                              CHS=行数－A4] }
+    { 4   ;   ;Manager             ;Code80        ;TableRelation=User."User Name";
+                                                   OnLookup=VAR
+                                                              l_recUser@1000000001 : Record 2000000120;
+                                                              LoginMgt@1000000000 : Codeunit 418;
+                                                            BEGIN
+                                                              IF PAGE.RUNMODAL(9800,l_recUser) = ACTION::LookupOK THEN
+                                                                Manager := l_recUser."Full Name";
+                                                            END;
+
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Manager;
+                                                              CHS=主管];
+                                                   Description=20->80 }
+    { 5   ;   ;Voucher Nos         ;Code20        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Voucher Nos;
+                                                              CHS=凭证编号] }
+    { 6   ;   ;Line Count -A5      ;Integer       ;CaptionML=[ENU=Line Count -A5;
+                                                              CHS=行数－A5] }
+    { 7   ;   ;Cash Flow Dimension Code;Option    ;CaptionML=[ENU=Cash Flow Dimension Code;
+                                                              CHS=现金流维代码];
+                                                   OptionCaptionML=[ENU=Analysis Dimension 1,Analysis Dimension 2,Analysis Dimension 3,Analysis Dimension 4;
+                                                                    CHS=分析维 1,分析维 2,分析维 3,分析维 4];
+                                                   OptionString=Analysis Dimension 1,Analysis Dimension 2,Analysis Dimension 3,Analysis Dimension 4 }
+    { 8   ;   ;Submit              ;Boolean       ;CaptionML=[ENU=Enable Fin. Auth. Workflow;
+                                                              CHS=启用财务审批流程] }
+    { 9   ;   ;Account Schedule Name 1;Code10     ;TableRelation="Acc. Schedule Name";
+                                                   CaptionML=[ENU=Account Schedule Name 1;
+                                                              CHS=报表工具名称];
+                                                   Description=Chinese Cash Flow Statement }
+    { 10  ;   ;Column Layout Name 1;Code10        ;TableRelation="Column Layout Name";
+                                                   CaptionML=[ENU=Column Layout Name 1;
+                                                              CHS=列布局名称];
+                                                   Description=Chinese Cash Flow Statement }
+    { 11  ;   ;Account Schedule Name 2;Code10     ;TableRelation="Acc. Schedule Name";
+                                                   CaptionML=[ENU=Account Schedule Name 2;
+                                                              CHS=报表工具名称];
+                                                   Description=Chinese Income Statement }
+    { 12  ;   ;Column Layout Name 2;Code10        ;TableRelation="Column Layout Name";
+                                                   CaptionML=[ENU=Column Layout Name 2;
+                                                              CHS=列布局名称];
+                                                   Description=Chinese Income Statement }
+    { 13  ;   ;Account Schedule Name 3;Code10     ;TableRelation="Acc. Schedule Name";
+                                                   CaptionML=[ENU=Account Schedule Name 3;
+                                                              CHS=报表工具名称];
+                                                   Description=Chinese Balance Sheet }
+    { 14  ;   ;Column Layout Name 3;Code10        ;TableRelation="Column Layout Name";
+                                                   CaptionML=[ENU=Coulumn Layout Name 3;
+                                                              CHS=列布局名称];
+                                                   Description=Chinese Balance Sheet }
+    { 15  ;   ;Enable Unified Voucher No.;Boolean ;CaptionML=[ENU=Enable Unified Voucher No.;
+                                                              CHS=启用连续凭证号] }
+    { 16  ;   ;Dimension Print Code 1;Code20      ;TableRelation=Dimension;
+                                                   CaptionML=[ENU=Dimension Print Code 1;
+                                                              CHS=维打印编码 1] }
+    { 17  ;   ;Dimension Print Code 2;Code20      ;TableRelation=Dimension;
+                                                   CaptionML=[ENU=Dimension Print Code 2;
+                                                              CHS=维打印编码 2] }
+    { 18  ;   ;Dimension Print Code 3;Code20      ;TableRelation=Dimension;
+                                                   CaptionML=[ENU=Dimension Print Code 3;
+                                                              CHS=维打印编码 3] }
+    { 19  ;   ;Dimension Print Code 4;Code20      ;TableRelation=Dimension;
+                                                   CaptionML=[ENU=Dimension Print Code 4;
+                                                              CHS=维打印编码 4] }
+    { 20  ;   ;Voucher Description ;Option        ;CaptionML=[ENU=Voucher Description;
+                                                              CHS=凭证描述];
+                                                   OptionCaptionML=[ENU=Entry Description,Cascade Account Name,Entry Desc+Cascade Acct. Name,Cascade Acct. Name+Entry Desc;
+                                                                    CHS=分录描述,级联科目名称,分录描述+级联科目名称,级联科目名称+分录描述];
+                                                   OptionString=Entry Description,Cascade Account Name,Entry Desc+Cascade Acct. Name,Cascade Acct. Name+Entry Desc }
+    { 21  ;   ;Use Account Description 2;Boolean  ;CaptionML=[ENU=Use Account Description 2;
+                                                              CHS=使用科目描述 2] }
+    { 22  ;   ;Use Account No. 2   ;Boolean       ;CaptionML=[ENU=Use Account No. 2;
+                                                              CHS=使用科目编号 2] }
+    { 23  ;   ;Same Voucher No. on Reverse;Boolean;CaptionML=[ENU=Same Voucher No. on Reverse;
+                                                              CHS=撤销凭证使用相同凭证号] }
+    { 24  ;   ;Recurring Jnl. Reverse DF;DateFormula;
+                                                   InitValue=1D;
+                                                   CaptionML=[ENU=Recurring Jnl. Reverse DateFormula;
+                                                              CHS=循环日记帐撤销日期公式] }
+    { 25  ;   ;Cash Flow Dimension Code 2;Code20  ;TableRelation=Dimension;
+                                                   CaptionML=[ENU=Cash Flow Dimension Code;
+                                                              CHS=现金流维代码];
+                                                   Description=2013 New }
+    { 26  ;   ;Cash Flow Dimension Value;Code20   ;TableRelation="Dimension Value".Code WHERE (Dimension Code=FIELD(Cash Flow Dimension Code 2));
+                                                   CaptionML=[ENU=Cash Flow Dimension Value;
+                                                              CHS=现金流维值];
+                                                   Description=2013 New }
+  }
+  KEYS
+  {
+    {    ;Primay Key                              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

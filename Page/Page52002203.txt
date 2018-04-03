@@ -1,0 +1,59 @@
+OBJECT Page 52002203 Golden Tax System Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:35:50;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Golden Tax System Setup;
+               CHS=金税系统接口设置];
+    SourceTable=Table52002200;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                CaptionML=[ENU=General;
+                           CHS=常规] }
+
+    { 1117700000;2;Field  ;
+                SourceExpr="Max Invoice Lines" }
+
+    { 1117700002;2;Field  ;
+                SourceExpr="Max Invoice Amount" }
+
+    { 1117700004;2;Field  ;
+                CaptionML=[ENU=Goods Tax No.;
+                           CHS=商品税号];
+                SourceExpr="Goods Tax No." }
+
+    { 1117700006;2;Field  ;
+                CaptionML=[ENU=Checker;
+                           CHS=复核人];
+                SourceExpr=Checker }
+
+    { 1117700008;2;Field  ;
+                SourceExpr=Payee }
+
+    { 1117700010;2;Field  ;
+                SourceExpr="Expense Apportion" }
+
+    { 1117700012;2;Field  ;
+                SourceExpr="Item Desc" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

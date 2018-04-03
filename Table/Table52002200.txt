@@ -1,0 +1,50 @@
+OBJECT Table 52002200 Golden Tax Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:21:22;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Golden Tax System Setup;
+               CHS=金税系统接口设置];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primay Key          ;Code10         }
+    { 2   ;   ;Max Invoice Lines   ;Decimal       ;CaptionML=[ENU=Maximum Lines;
+                                                              CHS=最大行数] }
+    { 3   ;   ;Max Invoice Amount  ;Decimal       ;CaptionML=[ENU=Maximum Amount;
+                                                              CHS=最大金额] }
+    { 4   ;   ;Goods Tax No.       ;Code10        ;CaptionML=[ENU=Goods Tax No.;
+                                                              CHS=商品税号] }
+    { 5   ;   ;Checker             ;Text10        ;CaptionML=[ENU=Checker;
+                                                              CHS=复核人] }
+    { 6   ;   ;Payee               ;Text10        ;CaptionML=[ENU=Payee;
+                                                              CHS=收款人] }
+    { 7   ;   ;Expense Apportion   ;Boolean       ;CaptionML=[ENU=Expense Apportion;
+                                                              CHS=费用分摊] }
+    { 8   ;   ;Item Desc           ;Option        ;CaptionML=[ENU=Item Description;
+                                                              CHS=物料说明];
+                                                   OptionCaptionML=[ENU=Item Desc 1,Item Desc 2;
+                                                                    CHS=物料描述 1,物料描述 2];
+                                                   OptionString=Item Desc 1,Item Desc 2 }
+  }
+  KEYS
+  {
+    {    ;Primay Key                              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

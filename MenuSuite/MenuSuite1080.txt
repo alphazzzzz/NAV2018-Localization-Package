@@ -1,0 +1,104 @@
+OBJECT MenuSuite 1080 Dept - Partner
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=18:01:55;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+  }
+  MENUNODES
+  {
+    {                ;[{2FDC1820-9659-4729-B00C-E67C8EDDAD5F}] ;CaptionML=[ENU=G/L Account Categories;
+                                                                           CHS=总账科目类别] }
+    {                ;[{B691EBD1-48A9-4592-BD88-30F323CDEC8C}] ;CaptionML=[ENU=Balance Sheet;
+                                                                           CHS=资产负债表] }
+    {                ;[{A3F99E70-978B-40E6-A6EE-BBDBB83304FF}] ;CaptionML=[ENU=Income Statement;
+                                                                           CHS=损益表] }
+    {                ;[{10B2BB8B-5CA4-4300-AC6A-F2C4ABB4C1DC}] ;CaptionML=[ENU=Cashflow Statement;
+                                                                           CHS=现金流量表] }
+    {                ;[{D0A2FF69-7C76-4BD1-AA5B-05AB2EE3008E}] ;CaptionML=[ENU=Retained Earnings Statement;
+                                                                           CHS=留存收益表] }
+    {                ;[{93D48AE3-47AF-439E-A3A8-0C4926C897A6}] ;CaptionML=[ENU=G/L Registers;
+                                                                           CHS=总账登记] }
+    {                ;[{A828FA85-CF32-49E2-BD72-830562646CC4}] ;CaptionML=[ENU=General Ledger Entries;
+                                                                           CHS=总账分录] }
+    {                ;[{72DB784B-14BD-4A1A-B57B-4BDBB37BC72B}] ;CaptionML=[ENU=G/L Budget Entries;
+                                                                           CHS=总账预算分录] }
+    {                ;[{88A9BCA9-4115-42C0-829D-75D0AA25AB8B}] ;CaptionML=[ENU=VAT Entries;
+                                                                           CHS=VAT分录] }
+    {                ;[{CA3FF827-2D9A-4E25-93EC-007FDD53B18A}] ;CaptionML=[ENU=Analysis View Entries;
+                                                                           CHS=分析视图分录];
+                                                                ApplicationArea= }
+    {                ;[{C61CF3FE-C0DA-4A90-B469-68A86D666F07}] ;CaptionML=[ENU=Analysis View Budget Entries;
+                                                                           CHS=分析视图预算分录];
+                                                                ApplicationArea= }
+    {                ;[{F5E6A431-1DED-4ED4-BA6F-C69B1C9ECE95}] ;CaptionML=[ENU=Item Budget Entries;
+                                                                           CHS=物料预算分录];
+                                                                ApplicationArea= }
+    {                ;[{6D096B23-15E8-4DC5-84A8-126726822726}] ;CaptionML=[ENU=Navigate;
+                                                                           CHS=导航] }
+    {                ;[{D6C5F2D3-675F-464F-8FF1-3FDBD9D6BAB6}] ;CaptionML=[ENU=Item Journals;
+                                                                           CHS=物料日记账] }
+    {                ;[{B46AC6FD-FB67-4AEF-8F66-9F6AF49D7070}] ;CaptionML=[ENU=Item Reclass. Journals;
+                                                                           CHS=物料重分类日记账];
+                                                                ApplicationArea= }
+    {                ;[{7963BE66-16A8-4740-B3F6-D61FAD6A305B}] ;CaptionML=[ENU=Phys. Inventory Journals;
+                                                                           CHS=物理库存日记账] }
+    {                ;[{B333AB87-A4D6-4234-9566-3110F86C1523}] ;CaptionML=[ENU=Revaluation Journals;
+                                                                           CHS=重估日记账] }
+    {                ;[{187737C9-BC96-4F7B-A92C-C522396B3797}] ;CaptionML=[ENU=Phys. Invt. Counting Periods;
+                                                                           CHS=物理库存计算期间];
+                                                                ApplicationArea= }
+    {                ;[{CA532485-499D-473B-B91B-CD29CC066FCF}] ;CaptionML=[ENU=Item Register - Quantity;
+                                                                           CHS=物料登记-数量] }
+    {                ;[{88CE9844-5E69-4E52-B74C-BC1B4F5FF830}] ;CaptionML=[ENU=Item Attributes;
+                                                                           CHS=物料属性] }
+    {                ;[{199EBC5F-EC17-45CB-A108-562E4978850F}] ;CaptionML=[ENU=Configuration Package Files;
+                                                                           CHS=配置包文件] }
+    {                ;[{8BC08AB1-70F5-419E-8E0F-2E93457B9C61}] ;CaptionML=[ENU=Get the mobile device activation code and app for tablets and smartphones;
+                                                                           CHS=获取移动设备平板和手机应用的激活码] }
+    {                ;[{51B7B594-3BCB-4639-81EE-66C491879B59}] ;CaptionML=[ENU=Payment Services;
+                                                                           CHS=付款服务] }
+    {                ;[{DE4A96D2-9635-48C6-8354-8873EA929C6C}] ;CaptionML=[ENU=Office Add-in Management;
+                                                                           CHS=Office插件管理] }
+    {                ;[{36FD5978-1AAA-4307-8C6A-156D51A778B3}] ;CaptionML=[ENU=Exchange Sync. Setup;
+                                                                           CHS=交换同步设置] }
+    {                ;[{C4479F27-4B8A-4CB2-A024-77DDE475F743}] ;CaptionML=[ENU=Extensions;
+                                                                           CHS=扩展];
+                                                                IsDepartmentPage=Yes }
+    {                ;[{82D0E3A5-B866-401C-84CD-6368353E35B5}] ;CaptionML=[ENU=Extension Management;
+                                                                           CHS=扩展管理] }
+    {                ;[{CFB9DB13-001A-4C8D-B571-D4E35C76AC54}] ;CaptionML=[ENU=Assisted Setup;
+                                                                           CHS=辅助设置] }
+    {                ;[{8D893C00-04B4-4272-8183-D0931259E984}] ;CaptionML=[ENU=Data Migration;
+                                                                           CHS=数据转换] }
+    {                ;[{AE9C0575-A40E-445C-AD89-0CBA363A9080}] ;CaptionML=[ENU=Set Up Customer/Vendor/Item Templates;
+                                                                           CHS=设置客户/供应商/物料模板] }
+    {                ;[{E0433AFB-5B38-4E2F-ADE7-0317B7ADE93D}] ;CaptionML=[ENU=Application Area;
+                                                                           CHS=应用区域] }
+    {                ;[{0D3D0EB4-59D7-4D3E-95AC-49CD269C6C04}] ;CaptionML=[ENU=Data Migration Settings;
+                                                                           CHS=数据转换设置] }
+    {                ;[{00646221-3EEF-4883-8640-FECFD9BEC705}] ;CaptionML=[ENU=Report Settings;
+                                                                           CHS=报表设置] }
+    {                ;[{A1E3A413-B0C4-4D20-8B1F-AFF7DFFDB43C}] ;CaptionML=[ENU=Setup and Help Resources;
+                                                                           CHS=设置帮助资源] }
+    {                ;[{78004071-9555-4C69-A922-A49D56CC8949}] ;CaptionML=[ENU=User Security Status;
+                                                                           CHS=用户安全状态] }
+    {                ;[{D796A21C-A7D8-44F6-906E-56990B909C6E}] ;CaptionML=[ENU=Inventory Setup;
+                                                                           CHS=库存设置] }
+    {                ;[{7D599EB6-4D6A-4802-B1E8-E17FE4F73F99}] ;CaptionML=[ENU=Inventory Setup;
+                                                                           CHS=库存设置] }
+    {                ;[{9E4634E6-8B0B-442D-8548-3756BC5AB39F}] ;CaptionML=[ENU=Item Journal Templates;
+                                                                           CHS=物料日记账模板] }
+    {                ;[{3E5DDCA2-4996-4AF6-8EFB-4B325ADD06FE}] ;CaptionML=[ENU=My Settings;
+                                                                           CHS=我的设置] }
+    {                ;[{D8B3E0D5-ACF6-4A09-85E1-5CDD1D43F6B3}] ;CaptionML=[ENU=My Notifications;
+                                                                           CHS=我的通知] }
+    {                ;[{5ED365CE-D734-412C-95B1-66DC53F02856}] ;CaptionML=[ENU=System Information;
+                                                                           CHS=系统信息] }
+  }
+}

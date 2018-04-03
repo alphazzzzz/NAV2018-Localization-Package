@@ -1,0 +1,148 @@
+OBJECT XMLport 50500 Object Remark
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/02/18;
+    Time=11:27:49;
+    Modified=Yes;
+    Version List=ALPHA;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Object Remark;
+    Direction=Import;
+    DefaultFieldsValidation=No;
+    OnPreXMLport=BEGIN
+
+                   Wnd.OPEN(
+                     'Process                 #1######### \' +
+                     '@2@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\');
+
+                   ClearDBM(TRUE);
+                   Wnd.UPDATE(1,'Mark');
+                 END;
+
+    OnPostXMLport=BEGIN
+                    Counter := 0;
+                    DBM_TableNo := 1;
+                    ObjectRemarkG.RESET;
+                    MaxCounter := ObjectRemarkG.COUNT;
+                    IF ObjectRemarkG.FIND('-') THEN
+                    REPEAT
+                      Counter += 1;
+                      Wnd.UPDATE(2,ROUND(Counter*10000/MaxCounter,1));
+                      IF ObjectRemarkG.Type <> 0 THEN
+                        ObjectTypeOK := TRUE
+                      ELSE
+                        ObjectTypeOK := FALSE;
+
+                      IF ObjectRemarkG.ID <> 0 THEN
+                        ObjectID_OK := TRUE
+                      ELSE
+                        ObjectID_OK := FALSE;
+
+                      IF ObjectTypeOK AND ObjectID_OK THEN
+                        IF Object.GET(ObjectRemarkG.Type,Object."Company Name",ObjectRemarkG.ID) THEN BEGIN
+                          IF CheckLisence(Object) THEN BEGIN
+                            Object."DBM Table No." := DBM_TableNo;
+                            Object.MODIFY;
+                          END;
+                        END;
+                    UNTIL ObjectRemarkG.NEXT=0;
+                    Wnd.CLOSE;
+                    MESSAGE('To finish selection set the TABLE FILTER to:\\'+
+                            '   "DBM Tabelnummer" = %1',DBM_TableNo);
+
+                    ObjectRemarkG.RESET;
+                    ObjectRemarkG.DELETEALL;
+                  END;
+
+    Format=Variable Text;
+  }
+  ELEMENTS
+  {
+    { [{FB049E5F-EA84-48C9-9640-7B3EE7D00D45}];  ;Root                ;Element ;Text     }
+
+    { [{EFD88BFA-AF4F-4BC3-B7FD-4C456A6223E5}];1 ;ObjectRemark        ;Element ;Table   ;
+                                                  SourceTable=Table50500 }
+
+    { [{6E6C91AD-2CD5-4E35-B498-8FDE71505997}];2 ;Type                ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Object Remark::Type }
+
+    { [{685D76DA-990B-4024-822A-1AF5AF5FAC86}];2 ;ID                  ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  SourceField=Object Remark::ID }
+
+    { [{CE72C8B6-A926-4A4C-A5F8-D3A6AEAFB058}];2 ;Name                ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Object Remark::Name }
+
+  }
+  EVENTS
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  CODE
+  {
+    VAR
+      Object@1000 : Record 2000000001;
+      ObjectID@1002 : Integer;
+      DBM_TableNo@1003 : Integer;
+      Counter@1004 : Integer;
+      MaxCounter@1005 : Integer;
+      Lisenced@1006 : Boolean;
+      ObjectTypeOK@1007 : Boolean;
+      ObjectID_OK@1008 : Boolean;
+      Wnd@1009 : Dialog;
+      ObjectRemarkG@1010 : Record 50500;
+      Text001@1011 : TextConst 'ENU=Import Excel File';
+      Text002@1012 : TextConst 'ENU=%1 must be greater then 0.';
+
+    LOCAL PROCEDURE ClearDBM@3(Window@1000 : Boolean);
+    BEGIN
+      IF Window THEN
+        Wnd.UPDATE(1,'Clear marks');
+      Object.RESET;
+      Object.SETFILTER(Type,'<>%1',Object.Type::TableData);
+      Object.SETFILTER("DBM Table No.",'>%1',0);
+      MaxCounter := Object.COUNT;
+      Counter := 0;
+      IF Object.FIND('-') THEN
+        REPEAT
+          Counter += 1;
+          IF Window THEN
+            Wnd.UPDATE(2,ROUND(Counter*10000/MaxCounter,1));
+          IF CheckLisence(Object) THEN BEGIN
+            Object."DBM Table No." := 0;
+            Object.MODIFY;
+          END;
+        UNTIL Object.NEXT=0;
+      ObjectRemarkG.RESET;
+      ObjectRemarkG.DELETEALL;
+    END;
+
+    LOCAL PROCEDURE CheckLisence@4(ObjectNew@1000 : Record 2000000001) : Boolean;
+    VAR
+      "License Permission"@1001 : Record 2000000043;
+    BEGIN
+      IF "License Permission".GET(ObjectNew.Type,ObjectNew.ID) THEN
+        IF ("License Permission"."Read Permission"="License Permission"."Read Permission"::Yes) AND
+           ("License Permission"."Modify Permission"="License Permission"."Modify Permission"::Yes)
+          THEN
+            EXIT(TRUE);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

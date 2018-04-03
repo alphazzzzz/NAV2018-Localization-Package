@@ -1,0 +1,44 @@
+OBJECT Page 52002202 Chinese Report Lines
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=16:38:52;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    SourceTable=Table85;
+    SourceTableView=SORTING(Schedule Name,Line No.)
+                    ORDER(Ascending);
+    PageType=Card;
+    OnInit=BEGIN
+             CurrPage.LOOKUPMODE := TRUE;
+           END;
+
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="Row No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Description }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

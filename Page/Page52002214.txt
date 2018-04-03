@@ -1,0 +1,108 @@
+OBJECT Page 52002214 Inv.Cost /AP Interim Page 2
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:35:52;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Inv.Cost /AP Interim Page;
+               CHS=库存成本/应付暂估];
+    SourceTable=Table32;
+    SourceTableView=SORTING(Item No.,Posting Date)
+                    ORDER(Ascending)
+                    WHERE(Entry Type=CONST(Purchase),
+                          Purch. Cost (Interim)=FILTER(<>0));
+    PageType=List;
+    OnOpenPage=BEGIN
+                 //SETFILTER("Posting Date",'..');
+                 SETFILTER("Date Filter",'..%1',TODAY);
+               END;
+
+    OnAfterGetRecord=BEGIN
+                       Vendor.GET("Source No.");
+                       SourceCode := Vendor.Name;
+                       Item.GET("Item No.");
+                       Description1 := Item.Description;
+                     END;
+
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Posting Date" }
+
+    { 15  ;2   ;Field     ;
+                SourceExpr="Document Date" }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Document No." }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Document Type" }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Item No." }
+
+    { 5   ;2   ;Field     ;
+                Name=Description;
+                CaptionML=[ENU=Description;
+                           CHS=说明];
+                SourceExpr=Description1 }
+
+    { 6   ;2   ;Field     ;
+                CaptionML=[ENU=Vendor No.;
+                           CHS=供应商编号];
+                SourceExpr="Source No." }
+
+    { 11  ;2   ;Field     ;
+                Name=Source Code;
+                CaptionML=[ENU=Vendor Name;
+                           CHS=供应商名字];
+                SourceExpr=SourceCode }
+
+    { 13  ;2   ;Field     ;
+                SourceExpr="Location Code" }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr=Quantity }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr="Unit of Measure Code" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Purch. Cost (Interim)" }
+
+    { 9   ;2   ;Field     ;
+                SourceExpr="Sales Amount (Interim)";
+                Visible=FALSE }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="Sales Cost (Interim)";
+                Visible=FALSE }
+
+  }
+  CODE
+  {
+    VAR
+      SourceCode@1000 : Text[50];
+      Vendor@1001 : Record 23;
+      Item@1002 : Record 27;
+      Description1@1003 : Text[50];
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,164 @@
+OBJECT Report 52002216 Import GoldTax Inf File
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=11:28:42;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    TransactionType=Update;
+    CaptionML=[ENU=Import Jinsui interface file;
+               CHS=输入金穗接口文件];
+    ProcessingOnly=Yes;
+    OnPostReport=BEGIN
+                   MESSAGE(Text004);
+                 END;
+
+  }
+  DATASET
+  {
+    { 6640;    ;DataItem;                    ;
+               DataItemTable=Table36;
+               DataItemTableView=WHERE(Document Type=FILTER(Invoice|Order));
+               ReqFilterHeadingML=[ENU=Sales Header;
+                                   CHS=销售标题];
+               OnAfterGetRecord=VAR
+                                  "Jinsui Invoice"@1000000000 : Record 52002201;
+                                BEGIN
+                                  "Jinsui Invoice".LOCKTABLE;
+
+                                  //>> #2
+                                  IF NOT FILE.EXISTS(FileName) THEN
+                                    EXIT;
+                                  //<<#2
+
+                                  MyFile.TEXTMODE(TRUE);
+                                  IF MyFile.OPEN(FileName) THEN
+                                    BEGIN
+                                        WHILE MyFile.POS < MyFile.LEN DO BEGIN
+                                          StrArray[1] :='';
+                                          StrArray[5] :='';
+                                          StrArray[9] :='';
+                                          InvNum := '';
+                                          MyFile.READ(String);
+                                          "Jinsui Invoice".SETRANGE("Jinsui Invoice"."Navision Doc No.", "No.");
+                                          "Jinsui Invoice".SETRANGE("Jinsui Invoice"."Doc Type","Jinsui Invoice"."Doc Type"::Invoice);
+                                          IF "Jinsui Invoice".FIND('-') THEN
+                                          REPEAT
+                                            IF FindSalesInvNo(String,"Jinsui Invoice"."Navision Phantom No.") = TRUE THEN
+                                            BEGIN
+                                               InvNum := StrArray[5];
+                                               IF StrArray[1] <> '1' THEN BEGIN
+                                                 "Jinsui Invoice"."JinSui Invoice No" := InvNum;
+                                                 "Jinsui Invoice"."Import DateTime" := CURRENTDATETIME;
+                                                 "Jinsui Invoice".MODIFY;
+                                               END
+                                               ELSE BEGIN
+                                               END;
+                                            END
+                                          UNTIL "Jinsui Invoice".NEXT = 0
+                                        END;
+                                    END
+                                  ELSE
+                                     MESSAGE(Text005);
+                                END;
+
+               ReqFilterFields=No.,Bill-to Customer No. }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             CHS=选项];
+                  GroupType=Group }
+
+      { 1000000000;2;Field  ;
+                  SourceExpr=FileName;
+                  OnAssistEdit=BEGIN
+
+                                 //RTC Import GoldTax  2013-4-2 Jim #1
+                                 Fileto:= TEMPORARYPATH+'RTCImportGoldTax.txt';
+                                 UPLOAD('DialogTitle','','*.txt|*.txt','',Fileto);
+                                 FileName:= TEMPORARYPATH+'RTCImportGoldTax.txt';
+                                 //<<#1
+                               END;
+                                }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      FileName@1000000000 : Text[250];
+      Text001@1000000001 : TextConst 'ENU=Open Jinsui Generated File;CHS=打开金税生成文件';
+      MyFile@1000000002 : File;
+      String@1000000003 : Text[900];
+      InvNum@1000000004 : Text[30];
+      Text002@1000000005 : TextConst 'CHS=~~';
+      Text003@1000000006 : TextConst 'CHS=,';
+      StrArray@1000000007 : ARRAY [10] OF Text[100];
+      Text004@1000000008 : TextConst 'ENU=Import Finished.;CHS=导入结束';
+      Text005@1000000009 : TextConst 'ENU=Cannot open file.;CHS=无法打开文件.';
+      Text006@1000000010 : TextConst 'ENU=Navision Document %1 hasn''t export Jinsui interface file yet.;CHS=Navision 文档 %1尚未导出金税接口文件.';
+      "--Tectura JC 1.00--"@1000000012 : Integer;
+      Fileto@1000000011 : Text[300];
+
+    PROCEDURE FindSalesInvNo@1000000001(String@1000000000 : Text[900];SalesInvNo@1000000001 : Code[20]) : Boolean;
+    VAR
+      NewString@1000000003 : Text[400];
+      NewString2@1000000002 : Text[400];
+    BEGIN
+         IF CopyToArray(String) = FALSE THEN
+            EXIT(FALSE);
+
+         IF (StrArray[9] = SalesInvNo) THEN
+            EXIT(TRUE)
+         ELSE
+            EXIT(FALSE);
+    END;
+
+    PROCEDURE CopyToArray@1000000002(Str@1000000000 : Text[900]) : Boolean;
+    VAR
+      I@1000000001 : Integer;
+      Pos@1000000002 : Integer;
+      Field@1000000003 : ARRAY [10] OF Text[30];
+    BEGIN
+
+       FOR I :=1 TO 10 DO BEGIN
+          Pos := STRPOS(Str,'~~');
+          IF Pos<>0  THEN
+            BEGIN
+             StrArray[I] := COPYSTR(Str,1,Pos-1);
+             Str:= COPYSTR(Str,Pos+2);
+            END
+          ELSE
+            EXIT(FALSE)
+       END;
+
+       EXIT(TRUE);
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

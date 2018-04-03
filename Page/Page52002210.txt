@@ -1,0 +1,92 @@
+OBJECT Page 52002210 Golden Tax Entry Log
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=16:38:52;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    SourceTable=Table52002201;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1117700000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1117700001;2;Field  ;
+                SourceExpr="SalesLine No." }
+
+    { 1117700003;2;Field  ;
+                SourceExpr="Navision Doc No." }
+
+    { 1117700007;2;Field  ;
+                SourceExpr=Description }
+
+    { 1117700009;2;Field  ;
+                SourceExpr="Unit of Measure" }
+
+    { 1117700011;2;Field  ;
+                SourceExpr="Line Quantity" }
+
+    { 1117700013;2;Field  ;
+                SourceExpr="Unit Price" }
+
+    { 1117700015;2;Field  ;
+                SourceExpr="VAT%" }
+
+    { 1117700017;2;Field  ;
+                SourceExpr=GST }
+
+    { 1117700019;2;Field  ;
+                SourceExpr="Discount Amount" }
+
+    { 1117700021;2;Field  ;
+                SourceExpr="VAT Amount" }
+
+    { 1117700023;2;Field  ;
+                SourceExpr="VAT Discount Amount" }
+
+    { 1117700025;2;Field  ;
+                SourceExpr="Discount %" }
+
+    { 1117700027;2;Field  ;
+                SourceExpr="Amount Inc. VAT" }
+
+    { 1117700029;2;Field  ;
+                SourceExpr="Amount Exc. VAT" }
+
+    { 1117700031;2;Field  ;
+                SourceExpr="Export DateTime" }
+
+    { 1117700033;2;Field  ;
+                SourceExpr="Import DateTime" }
+
+    { 1117700035;2;Field  ;
+                SourceExpr=NewLine }
+
+    { 1117700037;2;Field  ;
+                SourceExpr="Doc Type" }
+
+    { 1117700039;2;Field  ;
+                SourceExpr="JinSui Invoice No" }
+
+    { 1117700041;2;Field  ;
+                SourceExpr="Sell-to Customer No." }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

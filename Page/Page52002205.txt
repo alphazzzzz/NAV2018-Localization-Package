@@ -1,0 +1,581 @@
+OBJECT Page 52002205 G/L Entry Overview
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/08/18;
+    Time=10:35:51;
+    Modified=Yes;
+    Version List=NAVCN1.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=G/L Entry Overview;
+               CHS=总帐分录预览];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    ModifyAllowed=No;
+    SourceTable=Table17;
+    DelayedInsert=Yes;
+    SourceTableView=WHERE(Applied=FILTER(No));
+    PageType=Worksheet;
+    OnOpenPage=BEGIN
+                 DateFilter :=FORMAT(TODAY);
+                 UpdateModify;
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1000000018;  ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1000000017;1 ;ActionGroup;
+                      CaptionML=[ENU=Ent&ry;
+                                 CHS=分录] }
+      { 1000000016;2 ;Action    ;
+                      CaptionML=[ENU=G/L Dimension Overview;
+                                 CHS=G/L 维总览];
+                      OnAction=VAR
+                                 GLEntriesDimOverview@1001 : Page 563;
+                               BEGIN
+                                 IF RunOnTempRec THEN BEGIN
+                                   GLEntriesDimOverview.SetTempGLEntry(TempGLEntry);
+                                   GLEntriesDimOverview.RUN;
+                                 END ELSE
+                                   PAGE.RUN(PAGE::"G/L Entries Dimension Overview",Rec);
+                               END;
+                                }
+      { 1000000015;1 ;ActionGroup;
+                      CaptionML=[ENU=F&unctions;
+                                 CHS=功能(&u)] }
+      { 1000000014;2 ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Reverse Transaction;
+                                 CHS=撤销处理];
+                      OnAction=VAR
+                                 ReversalEntry@1000 : Record 179;
+                               BEGIN
+                                 CLEAR(ReversalEntry);
+                                 IF Reversed THEN
+                                   ReversalEntry.AlreadyReversedEntry(TABLECAPTION,"Entry No.");
+                                 IF "Journal Batch Name" = '' THEN
+                                   ReversalEntry.TestFieldError;
+                                 TESTFIELD("Transaction No.");
+                                 ReversalEntry.ReverseTransaction("Transaction No.")
+                               END;
+                                }
+      { 1000000013;1 ;Action    ;
+                      CaptionML=[ENU=&Navigate;
+                                 CHS=导航(&N)];
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate.SetDoc("Posting Date","Document No.");
+                                 Navigate.RUN;
+                               END;
+                                }
+      { 1000000012;1 ;Action    ;
+                      CaptionML=[ENU=Show All;
+                                 CHS=显示所有];
+                      Promoted=Yes;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Rec.RESET;
+                                 Rec.SETRANGE(Applied,FALSE);
+                                 VocucherNo :='';
+                                 DateFilter :='';
+                                 "G/LAccountNo" :='';
+                               END;
+                                }
+      { 1000000011;1 ;ActionGroup;
+                      CaptionML=[ENU=Print;
+                                 CHS=打印] }
+      { 1000000010;2 ;Action    ;
+                      CaptionML=[ENU=Voucher (FCY)-A4;
+                                 CHS=记帐凭证(FCY)-A4];
+                      OnAction=BEGIN
+                                 "ReportG/L".RESET;
+                                 IF Rec.GETFILTERS<>'' THEN
+                                   "ReportG/L".COPYFILTERS(Rec)
+                                 ELSE
+                                   "ReportG/L".SETRANGE("ReportG/L"."Document No.",Rec."Document No.");
+
+                                 LocalizationPackageSetup.GET;
+                                 IF LocalizationPackageSetup."Fixed Line" THEN BEGIN
+                                   VoucherRegA4F.SETTABLEVIEW("ReportG/L");
+                                   VoucherRegA4F.RUNMODAL();
+                                   CLEAR(VoucherRegA4F);
+                                 END ELSE BEGIN
+                                   VoucherRegA4.SETTABLEVIEW("ReportG/L");
+                                   VoucherRegA4.RUNMODAL();
+                                   CLEAR(VoucherRegA4);
+                                 END;
+                               END;
+                                }
+      { 1000000009;2 ;Action    ;
+                      CaptionML=[ENU=Voucher (LCY)-A4;
+                                 CHS=记帐凭证-A4];
+                      OnAction=BEGIN
+                                 "ReportG/L".RESET;
+                                 IF Rec.GETFILTERS<>'' THEN
+                                   "ReportG/L".COPYFILTERS(Rec)
+                                 ELSE
+                                   "ReportG/L".SETRANGE("ReportG/L"."Document No.",Rec."Document No.");
+
+
+                                 LocalizationPackageSetup.GET;
+                                 IF LocalizationPackageSetup."Fixed Line" THEN BEGIN
+                                   VoucherLCYA4F.SETTABLEVIEW("ReportG/L");
+                                   VoucherLCYA4F.RUNMODAL();
+                                   CLEAR(VoucherLCYA4F);
+                                 END ELSE BEGIN
+                                   VoucherLCYA4.SETTABLEVIEW("ReportG/L");
+                                   VoucherLCYA4.RUNMODAL();
+                                   CLEAR(VoucherLCYA4);
+                                 END;
+                               END;
+                                }
+      { 1000000008;2 ;Action    ;
+                      CaptionML=[ENU=Voucher (FCY)-A5;
+                                 CHS=凭证（外币）－A5];
+                      OnAction=BEGIN
+                                 "ReportG/L".RESET;
+                                 IF Rec.GETFILTERS<>'' THEN
+                                   "ReportG/L".COPYFILTERS(Rec)
+                                 ELSE
+                                   "ReportG/L".SETRANGE("ReportG/L"."Document No.",Rec."Document No.");
+
+                                 LocalizationPackageSetup.GET;
+                                 IF LocalizationPackageSetup."Fixed Line" THEN BEGIN
+                                   VoucherRegA5F.SETTABLEVIEW("ReportG/L");
+                                   VoucherRegA5F.RUNMODAL();
+                                   CLEAR(VoucherRegA5F);
+                                 END ELSE BEGIN
+                                   VoucherRegA5.SETTABLEVIEW("ReportG/L");
+                                   VoucherRegA5.RUNMODAL();
+                                   CLEAR(VoucherRegA5);
+                                 END;
+                               END;
+                                }
+      { 1000000007;2 ;Action    ;
+                      CaptionML=[ENU=Voucher (LCY)-A5;
+                                 CHS=记帐凭证(LCY)-A5];
+                      OnAction=BEGIN
+                                 "ReportG/L".RESET;
+                                 IF Rec.GETFILTERS<>'' THEN
+                                   "ReportG/L".COPYFILTERS(Rec)
+                                 ELSE
+                                   "ReportG/L".SETRANGE("ReportG/L"."Document No.",Rec."Document No.");
+
+                                 LocalizationPackageSetup.GET;
+                                 IF LocalizationPackageSetup."Fixed Line" THEN BEGIN
+                                   VoucherLCYA5F.SETTABLEVIEW("ReportG/L");
+                                   VoucherLCYA5F.RUNMODAL();
+                                   CLEAR(VoucherLCYA5F);
+                                 END ELSE BEGIN
+                                   VoucherLCYA5.SETTABLEVIEW("ReportG/L");
+                                   VoucherLCYA5.RUNMODAL();
+                                   CLEAR(VoucherLCYA5);
+                                 END;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1000000000;;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                CaptionML=[ENU=General;
+                           CHS=常规] }
+
+    { 1000000006;2;Field  ;
+                CaptionML=[ENU=Voucher Filter;
+                           CHS=凭证号];
+                SourceExpr=VocucherNo;
+                Importance=Promoted;
+                OnValidate=BEGIN
+                             UpdateModify;
+                               VocucherNoOnAfterValidate;
+                           END;
+
+                OnLookup=BEGIN
+                           CLEAR("G/LEntry");
+                           "G/LEntry".LOOKUPMODE(TRUE);
+                           IF NOT("G/LEntry".RUNMODAL = ACTION::LookupOK) THEN
+                             EXIT(FALSE)
+                           ELSE
+                             BEGIN
+                               Text := "G/LEntry".GetSelectionFilter;
+                               CLEAR("G/LEntry");
+                               UpdateModify;
+
+                               EXIT(TRUE);
+
+                             END;
+                         END;
+                          }
+
+    { 1000000005;2;Field  ;
+                Name=<DateFilter>;
+                CaptionML=[ENU=Date Filter;
+                           CHS=日期过滤器];
+                SourceExpr=DateFilter;
+                OnValidate=BEGIN
+                             IF ApplicationManagement.MakeDateFilter(DateFilter) = 0 THEN;
+                             SETFILTER("Date Filter",DateFilter);
+                             DateFilter := GETFILTER("Date Filter");
+                             UpdateModify;
+                               DateFilterOnAfterValidate;
+                           END;
+                            }
+
+    { 1000000004;2;Field  ;
+                CaptionML=[ENU=G/L Account Filter;
+                           CHS=G/L 账目过滤器];
+                SourceExpr="G/LAccountNo";
+                Importance=Promoted;
+                OnValidate=BEGIN
+                             UpdateModify;
+                               GLAccountNoOnAfterValidate;
+                           END;
+
+                OnLookup=BEGIN
+                           CLEAR("G/LAccount");
+                           "G/LAccount".LOOKUPMODE(TRUE);
+                           IF NOT("G/LAccount".RUNMODAL = ACTION::LookupOK) THEN
+                             EXIT(FALSE)
+                           ELSE
+                             BEGIN
+                               Text :="G/LAccount".GetSelectionFilter;
+                               CLEAR("G/LEntry");
+                               UpdateModify;
+
+                               EXIT(TRUE);
+
+                             END;
+                         END;
+                          }
+
+    { 1000000003;2;Field  ;
+                CaptionML=[ENU=Checked;
+                           CHS=复核];
+                SourceExpr=Checked;
+                OnValidate=BEGIN
+                             UpdateModify;
+                             CheckedOnAfterValidate;
+                           END;
+
+                OnLookup=VAR
+                           l_recUser@1000000000 : Record 2000000120;
+                           l_frmUser@1000000002 : Page 9800;
+                           xChecked@1000000003 : Code[50];
+                         BEGIN
+                           xChecked := Checked;
+                           IF PAGE.RUNMODAL(9800,l_recUser) = ACTION::LookupOK THEN
+                             Checked := l_recUser."User Name";
+                           IF (xChecked <> Checked) THEN BEGIN
+                             UpdateModify;
+                             CheckedOnAfterValidate;
+                           END;
+                         END;
+                          }
+
+    { 1   ;2   ;Field     ;
+                Name=DocumentNo;
+                CaptionML=[ENU=Document No.;
+                           CHS=单据编号];
+                SourceExpr=DocumentNo;
+                OnValidate=BEGIN
+                             UpdateModify;
+                           END;
+                            }
+
+    { 1000000002;2;Field  ;
+                CaptionML=[ENU=Prepared;
+                           CHS=制单人];
+                SourceExpr=RPrepared;
+                OnValidate=BEGIN
+                             UpdateModify;
+                             RPreparedOnAfterValidate;
+                           END;
+
+                OnLookup=VAR
+                           l_recUser@1000000000 : Record 2000000120;
+                           xRPrepared@1000000002 : Code[80];
+                         BEGIN
+                           xRPrepared := RPrepared;
+                           IF PAGE.RUNMODAL(9800,l_recUser) = ACTION::LookupOK THEN
+                             RPrepared :=l_recUser."User Name";
+                           IF (xRPrepared <> RPrepared) THEN BEGIN
+                             UpdateModify;
+                             CheckedOnAfterValidate;
+                           END;
+                         END;
+                          }
+
+    { 1000000070;1;Group  ;
+                Editable=FALSE;
+                GroupType=Repeater }
+
+    { 1000000069;2;Field  ;
+                SourceExpr="Entry No." }
+
+    { 1000000068;2;Field  ;
+                SourceExpr="Voucher No." }
+
+    { 1000000067;2;Field  ;
+                SourceExpr="G/L Account No." }
+
+    { 1000000066;2;Field  ;
+                SourceExpr="Posting Date" }
+
+    { 1000000065;2;Field  ;
+                SourceExpr="Document Type" }
+
+    { 1000000064;2;Field  ;
+                SourceExpr="Document No." }
+
+    { 1000000063;2;Field  ;
+                SourceExpr=Description }
+
+    { 1000000062;2;Field  ;
+                SourceExpr="Bal. Account No." }
+
+    { 1000000061;2;Field  ;
+                SourceExpr=Amount }
+
+    { 1000000060;2;Field  ;
+                SourceExpr="Global Dimension 1 Code" }
+
+    { 1000000059;2;Field  ;
+                SourceExpr="Global Dimension 2 Code" }
+
+    { 1000000058;2;Field  ;
+                SourceExpr="User ID" }
+
+    { 1000000057;2;Field  ;
+                SourceExpr="Source Code" }
+
+    { 1000000056;2;Field  ;
+                SourceExpr="System-Created Entry" }
+
+    { 1000000055;2;Field  ;
+                SourceExpr="Prior-Year Entry" }
+
+    { 1000000054;2;Field  ;
+                SourceExpr="Job No." }
+
+    { 1000000053;2;Field  ;
+                SourceExpr=Quantity }
+
+    { 1000000052;2;Field  ;
+                SourceExpr="VAT Amount" }
+
+    { 1000000051;2;Field  ;
+                SourceExpr="Business Unit Code" }
+
+    { 1000000050;2;Field  ;
+                SourceExpr="Journal Batch Name" }
+
+    { 1000000049;2;Field  ;
+                SourceExpr="Reason Code" }
+
+    { 1000000048;2;Field  ;
+                SourceExpr="Gen. Posting Type" }
+
+    { 1000000047;2;Field  ;
+                SourceExpr="Gen. Bus. Posting Group" }
+
+    { 1000000046;2;Field  ;
+                SourceExpr="Gen. Prod. Posting Group" }
+
+    { 1000000045;2;Field  ;
+                SourceExpr="Bal. Account Type" }
+
+    { 1000000044;2;Field  ;
+                SourceExpr="Transaction No." }
+
+    { 1000000043;2;Field  ;
+                SourceExpr="Debit Amount" }
+
+    { 1000000042;2;Field  ;
+                SourceExpr="Credit Amount" }
+
+    { 1000000041;2;Field  ;
+                SourceExpr="Document Date" }
+
+    { 1000000040;2;Field  ;
+                SourceExpr="External Document No." }
+
+    { 1000000039;2;Field  ;
+                SourceExpr="Source Type" }
+
+    { 1000000038;2;Field  ;
+                SourceExpr="Source No." }
+
+    { 1000000037;2;Field  ;
+                SourceExpr="No. Series" }
+
+    { 1000000036;2;Field  ;
+                SourceExpr="Tax Area Code" }
+
+    { 1000000035;2;Field  ;
+                SourceExpr="Tax Liable" }
+
+    { 1000000034;2;Field  ;
+                SourceExpr="Tax Group Code" }
+
+    { 1000000033;2;Field  ;
+                SourceExpr="Use Tax" }
+
+    { 1000000032;2;Field  ;
+                SourceExpr="VAT Bus. Posting Group" }
+
+    { 1000000031;2;Field  ;
+                SourceExpr="VAT Prod. Posting Group" }
+
+    { 1000000030;2;Field  ;
+                SourceExpr="Additional-Currency Amount" }
+
+    { 1000000029;2;Field  ;
+                SourceExpr="Add.-Currency Debit Amount" }
+
+    { 1000000028;2;Field  ;
+                SourceExpr="Add.-Currency Credit Amount" }
+
+    { 1000000027;2;Field  ;
+                SourceExpr="Close Income Statement Dim. ID" }
+
+    { 1000000026;2;Field  ;
+                SourceExpr="IC Partner Code" }
+
+    { 1000000025;2;Field  ;
+                SourceExpr=Reversed }
+
+    { 1000000024;2;Field  ;
+                SourceExpr="Reversed by Entry No." }
+
+    { 1000000023;2;Field  ;
+                SourceExpr="Reversed Entry No." }
+
+    { 1000000022;2;Field  ;
+                SourceExpr="Prod. Order No." }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="FA Entry Type" }
+
+    { 1000000020;2;Field  ;
+                SourceExpr="FA Entry No." }
+
+    { 1000000019;2;Field  ;
+                SourceExpr=Attachment }
+
+  }
+  CODE
+  {
+    VAR
+      "G/LEntry"@1000000022 : Page 20;
+      VocucherNo@1000000021 : Code[50];
+      DateFilter@1000000020 : Text[80];
+      "G/LAccountNo"@1000000019 : Code[50];
+      "G/LAccount"@1000000018 : Page 18;
+      "RecG/L"@1000000017 : Record 17;
+      DocumentNo@1000000016 : Text[1000];
+      TempDocumentNo@1000000015 : Code[20];
+      Int@1000000014 : Integer;
+      ApplicationManagement@1000000013 : Codeunit 1;
+      "ReportG/L"@1000000012 : Record 17;
+      VoucherRegA4F@1000000011 : Report 52002227;
+      VoucherLCYA4F@1000000010 : Report 52002228;
+      VoucherRegA5F@1000000009 : Report 52002229;
+      VoucherLCYA5F@1000000008 : Report 52002230;
+      Checked@1000000007 : Code[50];
+      RPrepared@1000000006 : Code[80];
+      "---Migration---"@1000000005 : Integer;
+      GLAcc@1000000004 : Record 15;
+      TempGLEntry@1000000003 : TEMPORARY Record 17;
+      AnalysisViewEntry@1000000002 : Record 365;
+      Navigate@1000000001 : Page 344;
+      RunOnTempRec@1000000000 : Boolean;
+      VoucherRegA4@1000000026 : Report 52002209;
+      VoucherLCYA4@1000000025 : Report 52002210;
+      VoucherRegA5@1000000024 : Report 52002218;
+      VoucherLCYA5@1000000023 : Report 52002219;
+      LocalizationPackageSetup@1000000028 : Record 52002202;
+
+    PROCEDURE UpdateModify@1117700000();
+    BEGIN
+      Int :=0;
+      TempDocumentNo :='';
+      //DocumentNo
+
+      Rec.RESET;
+      IF VocucherNo<>'' THEN
+        Rec.SETFILTER("Voucher No.",VocucherNo);
+
+
+      IF DateFilter<>'' THEN
+        Rec.SETFILTER("Posting Date",DateFilter);
+
+
+      IF Checked<>'' THEN
+        Rec.SETFILTER("User ID",Checked);
+
+      IF RPrepared<>'' THEN
+        Rec.SETFILTER(Prepared,RPrepared);
+
+      "RecG/L".RESET;
+      IF "G/LAccountNo"<>'' THEN
+        BEGIN
+          "RecG/L".SETFILTER("RecG/L"."G/L Account No.","G/LAccountNo");
+          "RecG/L".SETCURRENTKEY("RecG/L"."Document No.");
+          IF "RecG/L".FIND('-') THEN
+            REPEAT
+              Int :=Int+1;
+              IF TempDocumentNo<>"RecG/L"."Document No." THEN
+                BEGIN
+                  IF Int=1 THEN
+                    DocumentNo :="RecG/L"."Document No."
+                  ELSE
+                    DocumentNo :=DocumentNo+'|'+"RecG/L"."Document No.";
+                  TempDocumentNo :="RecG/L"."Document No.";
+                END;
+            UNTIL "RecG/L".NEXT=0
+          ELSE
+            Rec.SETFILTER("G/L Account No.","G/LAccountNo");
+        END;
+      IF DocumentNo<>'' THEN
+        Rec.SETFILTER("Document No.",DocumentNo);
+    END;
+
+    LOCAL PROCEDURE VocucherNoOnAfterValidate@19015169();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE DateFilterOnAfterValidate@19006009();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE GLAccountNoOnAfterValidate@19016418();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE CheckedOnAfterValidate@19040812();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE RPreparedOnAfterValidate@19027058();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+
